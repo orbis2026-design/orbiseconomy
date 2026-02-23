@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy;
+package me.Short.OrbisEconomy;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy.Events;
+package me.Short.OrbisEconomy.Events;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;

@@ -1,6 +1,6 @@
-name: TheosisEconomy
+name: OrbisEconomy
 version: 2.0.0
-main: me.Short.TheosisEconomy.TheosisEconomy
+main: me.Short.OrbisEconomy.OrbisEconomy
 description: A simple, yet customisable and robust, Vault-based economy provider.
 api-version: '1.21.11'
 
@@ -23,74 +23,110 @@ dependencies:
 
 permissions:
 
-  theosiseconomy.*:
-    description: "All TheosisEconomy permissions."
+  orbiseconomy.*:
+    description: "All OrbisEconomy permissions."
     default: op
 
-  theosiseconomy.balancetop.exclude:
+  orbiseconomy.balancetop.exclude:
     description: "Players with this permission will be excluded from the /balancetop list, if enabled in config.yml."
     default: op
 
-  theosiseconomy.command.*:
-    description: "Access to all TheosisEconomy commands and sub-commands."
+  orbiseconomy.command.*:
+    description: "Access to all OrbisEconomy commands and sub-commands."
     default: op
     children:
-      theosiseconomy.command.economy.*: true
-      theosiseconomy.command.balance: true
-      theosiseconomy.command.balance.others: true
-      theosiseconomy.command.pay: true
+      orbiseconomy.command.economy.*: true
+      orbiseconomy.command.balance: true
+      orbiseconomy.command.balance.others: true
+      orbiseconomy.command.pay: true
+      orbiseconomy.command.orbs.*: true
 
-  theosiseconomy.command.economy.*:
+  orbiseconomy.command.economy.*:
     description: "Access to /economy and all of its sub-commands."
     default: op
     children:
-      theosiseconomy.command.economy: true
-      theosiseconomy.command.economy.set: true
-      theosiseconomy.command.economy.give: true
-      theosiseconomy.command.economy.take: true
-      theosiseconomy.command.economy.reset: true
-      theosiseconomy.command.economy.reload: true
+      orbiseconomy.command.economy: true
+      orbiseconomy.command.economy.set: true
+      orbiseconomy.command.economy.give: true
+      orbiseconomy.command.economy.take: true
+      orbiseconomy.command.economy.reset: true
+      orbiseconomy.command.economy.reload: true
 
-  theosiseconomy.command.economy:
+  orbiseconomy.command.economy:
     description: "Access to /economy."
     default: op
 
-  theosiseconomy.command.economy.set:
+  orbiseconomy.command.economy.set:
     description: "Access to /economy set <player> <amount>."
     default: op
 
-  theosiseconomy.command.economy.give:
+  orbiseconomy.command.economy.give:
     description: "Access to /economy give <player> <amount>."
     default: op
 
-  theosiseconomy.command.economy.take:
+  orbiseconomy.command.economy.take:
     description: "Access to /economy take <player> <amount>."
     default: op
 
-  theosiseconomy.command.economy.reset:
+  orbiseconomy.command.economy.reset:
     description: "Access to /economy reset <player>."
     default: op
 
-  theosiseconomy.command.economy.reload:
+  orbiseconomy.command.economy.reload:
     description: "Access to /economy reload."
     default: op
 
-  theosiseconomy.command.balance:
+  orbiseconomy.command.balance:
     description: "Access to /balance."
     default: true
 
-  theosiseconomy.command.balance.others:
+  orbiseconomy.command.balance.others:
     description: "Access to /balance [player]."
     default: true
 
-  theosiseconomy.command.balancetop:
+  orbiseconomy.command.balancetop:
     description: "Access to /balancetop."
     default: true
 
-  theosiseconomy.command.pay:
+  orbiseconomy.command.pay:
     description: "Access to /pay."
     default: true
 
-  theosiseconomy.command.paytoggle:
+  orbiseconomy.command.paytoggle:
     description: "Access to /paytoggle."
     default: true
+
+  orbiseconomy.command.orbs.*:
+    description: "Access to /orbs and all of its sub-commands."
+    default: op
+    children:
+      orbiseconomy.command.orbs: true
+      orbiseconomy.command.orbs.balance: true
+      orbiseconomy.command.orbs.balance.others: true
+      orbiseconomy.command.orbs.give: true
+      orbiseconomy.command.orbs.take: true
+      orbiseconomy.command.orbs.set: true
+
+  orbiseconomy.command.orbs:
+    description: "Access to /orbs."
+    default: true
+
+  orbiseconomy.command.orbs.balance:
+    description: "Access to /orbs balance."
+    default: true
+
+  orbiseconomy.command.orbs.balance.others:
+    description: "Access to /orbs balance [player]."
+    default: true
+
+  orbiseconomy.command.orbs.give:
+    description: "Access to /orbs give <player> <amount>."
+    default: op
+
+  orbiseconomy.command.orbs.take:
+    description: "Access to /orbs take <player> <amount>."
+    default: op
+
+  orbiseconomy.command.orbs.set:
+    description: "Access to /orbs set <player> <amount>."
+    default: op

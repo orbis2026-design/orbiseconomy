@@ -1,6 +1,6 @@
-package me.Short.TheosisEconomy.Listeners;
+package me.Short.OrbisEconomy.Listeners;
 
-import me.Short.TheosisEconomy.TheosisEconomy;
+import me.Short.OrbisEconomy.OrbisEconomy;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -15,11 +15,11 @@ import java.util.logging.Level;
 public class PlayerJoinListener implements Listener
 {
 
-    // Instance of "TheosisEconomy"
-    private TheosisEconomy instance;
+    // Instance of "OrbisEconomy"
+    private OrbisEconomy instance;
 
     // Constructor
-    public PlayerJoinListener(TheosisEconomy instance)
+    public PlayerJoinListener(OrbisEconomy instance)
     {
         this.instance = instance;
     }

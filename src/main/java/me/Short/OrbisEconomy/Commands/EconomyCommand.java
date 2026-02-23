@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy.Commands;
+package me.Short.OrbisEconomy.Commands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -6,9 +6,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import me.Short.TheosisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
-import me.Short.TheosisEconomy.PlayerAccount;
-import me.Short.TheosisEconomy.TheosisEconomy;
+import me.Short.OrbisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
+import me.Short.OrbisEconomy.PlayerAccount;
+import me.Short.OrbisEconomy.OrbisEconomy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -26,12 +26,12 @@ import java.util.logging.Level;
 public class EconomyCommand
 {
 
-    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, TheosisEconomy instance)
+    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, OrbisEconomy instance)
     {
         return Commands.literal(commandName)
 
                 // Require permission
-                .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.economy"))
+                .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.economy"))
 
                 .executes(ctx ->
                 {
@@ -44,7 +44,7 @@ public class EconomyCommand
                 .then(Commands.literal("set")
 
                         // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.economy.set"))
+                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.economy.set"))
 
                         .executes(ctx ->
                         {
@@ -83,7 +83,7 @@ public class EconomyCommand
                 .then(Commands.literal("give")
 
                         // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.economy.give"))
+                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.economy.give"))
 
                         .executes(ctx ->
                         {
@@ -122,7 +122,7 @@ public class EconomyCommand
                 .then(Commands.literal("take")
 
                         // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.economy.take"))
+                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.economy.take"))
 
                         .executes(ctx ->
                         {
@@ -161,7 +161,7 @@ public class EconomyCommand
                 .then(Commands.literal("reset")
 
                         // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.economy.reset"))
+                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.economy.reset"))
 
                         .executes(ctx ->
                         {
@@ -187,7 +187,7 @@ public class EconomyCommand
                 .then(Commands.literal("reload")
 
                         // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.economy.reload"))
+                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.economy.reload"))
 
                         .executes(ctx ->
                         {
@@ -199,7 +199,7 @@ public class EconomyCommand
     }
 
     // Method to execute the logic for the "set" sub-command
-    private static void executeSetLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
+    private static void executeSetLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
     {
         net.milkbowl.vault.economy.Economy economy = instance.getEconomy();
 
@@ -271,7 +271,7 @@ public class EconomyCommand
     }
 
     // Method to execute the logic for the "give" sub-command
-    private static void executeGiveLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
+    private static void executeGiveLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
     {
         net.milkbowl.vault.economy.Economy economy = instance.getEconomy();
 
@@ -304,18 +304,18 @@ public class EconomyCommand
         {
             String errorMessage = depositPlayerResponse.errorMessage;
 
-            if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorWouldExceedMaxBalance()))
+            if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorWouldExceedMaxBalance()))
             {
                 ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.would-exceed-max-balance"),
                         Placeholder.component("target", Component.text(target.getName()))));
             }
-            else if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorTooManyDecimalPlaces()))
+            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorTooManyDecimalPlaces()))
             {
                 ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.too-many-decimal-places-amount"),
                         Placeholder.component("amount", Component.text(amount.toPlainString())),
                         Placeholder.component("decimal_places", Component.text(economy.fractionalDigits()))));
             }
-            else if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorNotGreaterThanZero()))
+            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorNotGreaterThanZero()))
             {
                 ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
             }
@@ -346,7 +346,7 @@ public class EconomyCommand
     }
 
     // Method to execute the logic for the "take" sub-command
-    private static void executeTakeLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
+    private static void executeTakeLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
     {
         net.milkbowl.vault.economy.Economy economy = instance.getEconomy();
 
@@ -380,19 +380,19 @@ public class EconomyCommand
         {
             String errorMessage = withdrawPlayerResponse.errorMessage;
 
-            if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorInsufficientFunds()))
+            if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorInsufficientFunds()))
             {
                 ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.insufficient-funds-other"),
                         Placeholder.component("target", Component.text(target.getName())),
                         Placeholder.component("amount", Component.text(economy.format(amountAsDouble)))));
             }
-            else if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorTooManyDecimalPlaces()))
+            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorTooManyDecimalPlaces()))
             {
                 ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.too-many-decimal-places-amount"),
                         Placeholder.component("amount", Component.text(amount.toPlainString())),
                         Placeholder.component("decimal_places", Component.text(economy.fractionalDigits()))));
             }
-            else if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorNotGreaterThanZero()))
+            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorNotGreaterThanZero()))
             {
                 ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
             }
@@ -423,7 +423,7 @@ public class EconomyCommand
     }
 
     // Method to execute the logic for the "reset" sub-command
-    private static void executeResetLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target)
+    private static void executeResetLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target)
     {
         net.milkbowl.vault.economy.Economy economy = instance.getEconomy();
 
@@ -503,7 +503,7 @@ public class EconomyCommand
     }
 
     // Method to execute the logic for the "reload" sub-command
-    private static void executeReloadLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx)
+    private static void executeReloadLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx)
     {
         instance.reload();
 
