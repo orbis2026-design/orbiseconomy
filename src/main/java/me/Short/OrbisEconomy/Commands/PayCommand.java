@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy.Commands;
+package me.Short.OrbisEconomy.Commands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -6,9 +6,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import me.Short.TheosisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
-import me.Short.TheosisEconomy.Events.PlayerPayPlayerEvent;
-import me.Short.TheosisEconomy.TheosisEconomy;
+import me.Short.OrbisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
+import me.Short.OrbisEconomy.Events.PlayerPayPlayerEvent;
+import me.Short.OrbisEconomy.OrbisEconomy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -29,12 +29,12 @@ import java.util.concurrent.CompletableFuture;
 public class PayCommand
 {
 
-    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, TheosisEconomy instance)
+    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, OrbisEconomy instance)
     {
         return Commands.literal(commandName)
 
                 // Require permission
-                .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.pay"))
+                .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.pay"))
 
                 .executes(ctx ->
                 {
@@ -89,7 +89,7 @@ public class PayCommand
     }
 
     // Method to execute the command logic
-    private static void executeCommandLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
+    private static void executeCommandLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
     {
         final CommandSender sender = ctx.getSource().getSender();
 
@@ -171,17 +171,17 @@ public class PayCommand
         {
             String errorMessage = withdrawPlayerResponse.errorMessage;
 
-            if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorTooManyDecimalPlaces()))
+            if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorTooManyDecimalPlaces()))
             {
                 senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.too-many-decimal-places-amount"),
                         Placeholder.component("amount", Component.text(amount.toPlainString())),
                         Placeholder.component("decimal_places", Component.text(economy.fractionalDigits()))));
             }
-            else if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorNotGreaterThanZero()))
+            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorNotGreaterThanZero()))
             {
                 senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
             }
-            else if (errorMessage.equals(me.Short.TheosisEconomy.Economy.getErrorInsufficientFunds())) // This should never be the case, since we already checked to make sure the sender has enough money
+            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorInsufficientFunds())) // This should never be the case, since we already checked to make sure the sender has enough money
             {
                 senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.insufficient-funds"),
                         Placeholder.component("amount", Component.text(economy.format(amountAsDouble)))));

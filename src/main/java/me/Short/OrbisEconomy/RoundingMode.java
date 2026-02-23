@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy;
+package me.Short.OrbisEconomy;
 
 public enum RoundingMode
 {

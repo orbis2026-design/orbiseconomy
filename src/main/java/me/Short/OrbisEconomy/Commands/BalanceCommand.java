@@ -1,12 +1,12 @@
-package me.Short.TheosisEconomy.Commands;
+package me.Short.OrbisEconomy.Commands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import me.Short.TheosisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
-import me.Short.TheosisEconomy.TheosisEconomy;
+import me.Short.OrbisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
+import me.Short.OrbisEconomy.OrbisEconomy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.OfflinePlayer;
@@ -19,12 +19,12 @@ import org.jspecify.annotations.Nullable;
 public class BalanceCommand
 {
 
-    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, TheosisEconomy instance)
+    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, OrbisEconomy instance)
     {
         return Commands.literal(commandName)
 
                 // Require permission
-                .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.balance"))
+                .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.balance"))
 
                 .executes(ctx ->
                 {
@@ -37,7 +37,7 @@ public class BalanceCommand
                 .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
 
                         // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.balance.others"))
+                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.balance.others"))
 
                         // Command logic if a target player was specified
                         .executes(ctx ->
@@ -51,7 +51,7 @@ public class BalanceCommand
     }
 
     // Method to execute the command logic
-    private static void executeCommandLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx, @Nullable OfflinePlayer target)
+    private static void executeCommandLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, @Nullable OfflinePlayer target)
     {
         final CommandSender sender = ctx.getSource().getSender();
 

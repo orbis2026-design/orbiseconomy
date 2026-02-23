@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy;
+package me.Short.OrbisEconomy;
 
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
@@ -22,11 +22,11 @@ public class Economy implements net.milkbowl.vault.economy.Economy
     private static final String ERROR_TOO_MANY_DECIMAL_PLACES = "Too many decimal places.";
     private static final String ERROR_NOT_GREATER_THAN_ZERO = "Amount is not greater than zero.";
 
-    // Instance of "TheosisEconomy"
-    private TheosisEconomy instance;
+    // Instance of "OrbisEconomy"
+    private OrbisEconomy instance;
 
     // Constructor
-    public Economy(TheosisEconomy instance)
+    public Economy(OrbisEconomy instance)
     {
         this.instance = instance;
     }

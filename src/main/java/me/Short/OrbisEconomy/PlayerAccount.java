@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy;
+package me.Short.OrbisEconomy;
 
 import java.math.BigDecimal;
 
@@ -9,17 +9,20 @@ public class PlayerAccount
 
     private boolean acceptingPayments;
 
+    private BigDecimal orbsBalance;
+
     // Constructor
     public PlayerAccount(BigDecimal balance, boolean acceptingPayments)
     {
         this.balance = balance;
         this.acceptingPayments = acceptingPayments;
+        this.orbsBalance = BigDecimal.ZERO;
     }
 
     // Method to get a `PlayerAccountSnapshot` of this `PlayerAccount`
     public PlayerAccountSnapshot snapshot()
     {
-        return new PlayerAccountSnapshot(balance, acceptingPayments);
+        return new PlayerAccountSnapshot(balance, acceptingPayments, orbsBalance);
     }
 
     // ----- Getters -----
@@ -48,6 +51,18 @@ public class PlayerAccount
     public void setAcceptingPayments(boolean acceptingPayments)
     {
         this.acceptingPayments = acceptingPayments;
+    }
+
+    // Getter for 'orbsBalance'
+    public BigDecimal getOrbsBalance()
+    {
+        return orbsBalance != null ? orbsBalance : BigDecimal.ZERO;
+    }
+
+    // Setter for "orbsBalance"
+    public void setOrbsBalance(BigDecimal orbsBalance)
+    {
+        this.orbsBalance = orbsBalance;
     }
 
 }

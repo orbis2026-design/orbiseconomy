@@ -1,9 +1,9 @@
-package me.Short.TheosisEconomy.Commands;
+package me.Short.OrbisEconomy.Commands;
 
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
-import me.Short.TheosisEconomy.PlayerAccount;
-import me.Short.TheosisEconomy.TheosisEconomy;
+import me.Short.OrbisEconomy.PlayerAccount;
+import me.Short.OrbisEconomy.OrbisEconomy;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.NullMarked;
@@ -15,11 +15,11 @@ import java.util.UUID;
 public class PayToggleCommand implements BasicCommand
 {
 
-    // Instance of "TheosisEconomy"
-    private TheosisEconomy instance;
+    // Instance of "OrbisEconomy"
+    private OrbisEconomy instance;
 
     // Constructor
-    public PayToggleCommand(TheosisEconomy mainInstance)
+    public PayToggleCommand(OrbisEconomy mainInstance)
     {
         this.instance = mainInstance;
     }
@@ -75,6 +75,6 @@ public class PayToggleCommand implements BasicCommand
     @Override
     public @Nullable String permission()
     {
-        return "theosiseconomy.command.paytoggle";
+        return "orbiseconomy.command.paytoggle";
     }
 }

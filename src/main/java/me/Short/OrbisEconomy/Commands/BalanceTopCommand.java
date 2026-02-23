@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy.Commands;
+package me.Short.OrbisEconomy.Commands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -6,9 +6,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import me.Short.TheosisEconomy.BalanceTop;
-import me.Short.TheosisEconomy.TheosisEconomy;
-import me.Short.TheosisEconomy.Util;
+import me.Short.OrbisEconomy.BalanceTop;
+import me.Short.OrbisEconomy.OrbisEconomy;
+import me.Short.OrbisEconomy.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -32,12 +32,12 @@ import java.util.concurrent.CompletableFuture;
 public class BalanceTopCommand
 {
 
-    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, TheosisEconomy instance)
+    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, OrbisEconomy instance)
     {
         return Commands.literal(commandName)
 
                 // Require permission
-                .requires(sender -> sender.getSender().hasPermission("theosiseconomy.command.balancetop"))
+                .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.balancetop"))
 
                 // Command logic if no page number was specified
                 .executes(ctx ->
@@ -77,7 +77,7 @@ public class BalanceTopCommand
     }
 
     // Method to execute the command logic
-    private static void executeCommandLogic(TheosisEconomy instance, final CommandContext<CommandSourceStack> ctx, int pageNumber)
+    private static void executeCommandLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, int pageNumber)
     {
         final CommandSender sender = ctx.getSource().getSender();
 
@@ -154,7 +154,7 @@ public class BalanceTopCommand
     }
 
     // Method to calculate the number of pages for the top balances map
-    private static int calculateBalanceTopPages(TheosisEconomy instance)
+    private static int calculateBalanceTopPages(OrbisEconomy instance)
     {
         return (int) Math.ceil((double) instance.getBalanceTop().getTopBalances().size() / (double) instance.getConfig().getInt("settings.balancetop.page-length"));
     }

@@ -1,17 +1,18 @@
-package me.Short.TheosisEconomy;
+package me.Short.OrbisEconomy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import me.Short.TheosisEconomy.Commands.BalanceCommand;
-import me.Short.TheosisEconomy.Commands.BalanceTopCommand;
-import me.Short.TheosisEconomy.Commands.EconomyCommand;
-import me.Short.TheosisEconomy.Commands.PayCommand;
-import me.Short.TheosisEconomy.Commands.PayToggleCommand;
-import me.Short.TheosisEconomy.Events.BalanceTopSortEvent;
-import me.Short.TheosisEconomy.Listeners.PlayerJoinListener;
+import me.Short.OrbisEconomy.Commands.BalanceCommand;
+import me.Short.OrbisEconomy.Commands.BalanceTopCommand;
+import me.Short.OrbisEconomy.Commands.EconomyCommand;
+import me.Short.OrbisEconomy.Commands.OrbsCommand;
+import me.Short.OrbisEconomy.Commands.PayCommand;
+import me.Short.OrbisEconomy.Commands.PayToggleCommand;
+import me.Short.OrbisEconomy.Events.BalanceTopSortEvent;
+import me.Short.OrbisEconomy.Listeners.PlayerJoinListener;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.milkbowl.vault.permission.Permission;
@@ -52,7 +53,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class TheosisEconomy extends JavaPlugin
+public class OrbisEconomy extends JavaPlugin
 {
 
     // Map containing snapshots of player accounts to be saved to respective JSON files on a schedule
@@ -129,7 +130,7 @@ public class TheosisEconomy extends JavaPlugin
         // Create instance of Gson
         gson = new GsonBuilder().setPrettyPrinting().create();
 
-        // Register TheosisEconomy as a Vault Economy provider
+        // Register OrbisEconomy as a Vault Economy provider
         economy = new Economy(this);
         Bukkit.getServicesManager().register(net.milkbowl.vault.economy.Economy.class, economy, this, ServicePriority.Highest);
 
@@ -167,6 +168,7 @@ public class TheosisEconomy extends JavaPlugin
             registrar.register(BalanceTopCommand.createCommand(getConfig().getString("settings.commands.balancetop.name"), this), getConfig().getString("settings.commands.balancetop.description"), getConfig().getStringList("settings.commands.balancetop.aliases"));
             registrar.register(PayCommand.createCommand(getConfig().getString("settings.commands.pay.name"), this), getConfig().getString("settings.commands.pay.description"), getConfig().getStringList("settings.commands.pay.aliases"));
             registrar.register(EconomyCommand.createCommand(getConfig().getString("settings.commands.economy.name"), this), getConfig().getString("settings.commands.economy.description"), getConfig().getStringList("settings.commands.economy.aliases"));
+            registrar.register(OrbsCommand.createCommand(getConfig().getString("settings.commands.orbs.name"), this), getConfig().getString("settings.commands.orbs.description"), getConfig().getStringList("settings.commands.orbs.aliases"));
         });
 
         // Register PlaceholderAPI placeholders, if PlaceholderAPI is installed
@@ -403,7 +405,7 @@ public class TheosisEconomy extends JavaPlugin
             {
                 OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
 
-                if (!excludedPlayers.contains(uuid) && !(balanceTopConsiderExcludePermission && permissions.playerHas(null, player, "theosiseconomy.balancetop.exclude")) && (!balanceTopExcludePermanentlyBannedPlayers || !((liteBansInstalled && Util.isPlayerLiteBansPermanentlyBanned(uuid).join()) || player.isBanned())))
+                if (!excludedPlayers.contains(uuid) && !(balanceTopConsiderExcludePermission && permissions.playerHas(null, player, "orbiseconomy.balancetop.exclude")) && (!balanceTopExcludePermanentlyBannedPlayers || !((liteBansInstalled && Util.isPlayerLiteBansPermanentlyBanned(uuid).join()) || player.isBanned())))
                 {
                     PlayerAccount account = playerAccounts.get(uuid);
                     BigDecimal balance = account.getBalance();

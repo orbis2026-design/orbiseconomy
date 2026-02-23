@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy;
+package me.Short.OrbisEconomy;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -17,11 +17,11 @@ import java.util.regex.Pattern;
 public class PlaceholderAPI extends PlaceholderExpansion
 {
 
-    // Instance of "TheosisEconomy"
-    private TheosisEconomy instance;
+    // Instance of "OrbisEconomy"
+    private OrbisEconomy instance;
 
     // Constructor
-    public PlaceholderAPI(TheosisEconomy instance)
+    public PlaceholderAPI(OrbisEconomy instance)
     {
         this.instance = instance;
     }
@@ -53,7 +53,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
     @Override
     public String onRequest(OfflinePlayer player, String params)
     {
-        // %theosiseconomy_accepting_payments%
+        // %orbiseconomy_accepting_payments%
         if (params.equalsIgnoreCase("accepting_payments"))
         {
             if (player == null)
@@ -64,19 +64,19 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return Boolean.toString(instance.getPlayerAccounts().get(player.getUniqueId()).getAcceptingPayments());
         }
 
-        // %theosiseconomy_combined_total_balance%
+        // %orbiseconomy_combined_total_balance%
         if (params.equalsIgnoreCase("combined_total_balance"))
         {
             return instance.getBalanceTop().getCombinedTotalBalance().toPlainString();
         }
 
-        // %theosiseconomy_combined_total_balance_formatted%
+        // %orbiseconomy_combined_total_balance_formatted%
         if (params.equalsIgnoreCase("combined_total_balance_formatted"))
         {
             return instance.getEconomy().format(instance.getBalanceTop().getCombinedTotalBalance().doubleValue());
         }
 
-        // %theosiseconomy_richest_<position>_name%
+        // %orbiseconomy_richest_<position>_name%
         if (Pattern.compile("richest_[1-9][0-9]*_name$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_name"...
         {
             try
@@ -98,7 +98,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             }
         }
 
-        // %theosiseconomy_richest_<position>_uuid%
+        // %orbiseconomy_richest_<position>_uuid%
         if (Pattern.compile("richest_[1-9][0-9]*_uuid$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_uuid"...
         {
             try
@@ -120,7 +120,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             }
         }
 
-        // %theosiseconomy_richest_<position>_balance%
+        // %orbiseconomy_richest_<position>_balance%
         if (Pattern.compile("richest_[1-9][0-9]*_balance$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_balance"...
         {
             try
@@ -142,7 +142,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             }
         }
 
-        // %theosiseconomy_richest_<position>_balance_formatted%
+        // %orbiseconomy_richest_<position>_balance_formatted%
         if (Pattern.compile("richest_[1-9][0-9]*_balance_formatted$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_balance_formatted"...
         {
             try
@@ -164,7 +164,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             }
         }
 
-        // %theosiseconomy_richest_<position>_entry%
+        // %orbiseconomy_richest_<position>_entry%
         if (Pattern.compile("richest_[1-9][0-9]*_entry$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_entry"...
         {
             try
@@ -195,7 +195,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             }
         }
 
-        // %theosiseconomy_richest_<position>_entry_legacy%
+        // %orbiseconomy_richest_<position>_entry_legacy%
         if (Pattern.compile("richest_[1-9][0-9]*_entry_legacy$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_entry_legacy"...
         {
             try

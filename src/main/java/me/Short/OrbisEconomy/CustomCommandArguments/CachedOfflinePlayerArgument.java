@@ -1,4 +1,4 @@
-package me.Short.TheosisEconomy.CustomCommandArguments;
+package me.Short.OrbisEconomy.CustomCommandArguments;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -13,7 +13,7 @@ import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
-import me.Short.TheosisEconomy.TheosisEconomy;
+import me.Short.OrbisEconomy.OrbisEconomy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
@@ -27,11 +27,11 @@ import java.util.concurrent.CompletableFuture;
 public class CachedOfflinePlayerArgument implements CustomArgumentType<OfflinePlayer, PlayerSelectorArgumentResolver>
 {
 
-    // Instance of "TheosisEconomy"
-    private static TheosisEconomy instance;
+    // Instance of "OrbisEconomy"
+    private static OrbisEconomy instance;
 
     // Constructor
-    public CachedOfflinePlayerArgument(TheosisEconomy instance)
+    public CachedOfflinePlayerArgument(OrbisEconomy instance)
     {
         CachedOfflinePlayerArgument.instance = instance;
     }

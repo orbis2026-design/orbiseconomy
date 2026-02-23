@@ -9,7 +9,7 @@ settings:
   currency:
 
     # The balance a new player will start with, and what "/economy reset <player>" will set the target player's balance to
-    #      - TheosisEconomy does not support negative balances
+    #      - OrbisEconomy does not support negative balances
     # Default: 0.00
     default-balance: 0.00
 
@@ -27,18 +27,18 @@ settings:
     decimal-places: 2
 
     # Your currency name (singular)
-    # Default: "pound"
-    name-singular: "pound"
+    # Default: "Orb"
+    name-singular: "Orb"
 
     # Your currency name (plural)
-    # Default: "pounds"
-    name-plural: "pounds"
+    # Default: "Orbs"
+    name-plural: "Orbs"
 
     # The format in which your currency will be displayed
     #      - <amount> will be replaced with the amount of money
     #      - <name> will be replaced with your currency name
-    # Default: "£<amount> <name>"
-    format: "£<amount> <name>"
+    # Default: "<amount> <name>"
+    format: "<amount> <name>"
 
     # What type of rounding should occur when an amount of money uses more decimal places than what the currency is configured to use
     #      - Valid values are NONE, ROUND_NEAREST, ROUND_UP, and ROUND_DOWN
@@ -61,7 +61,7 @@ settings:
     # Default: 0.01
     min-balance: 0.01
 
-    # Whether to exclude players with the permission `theosiseconomy.balancetop.exclude` from the list
+    # Whether to exclude players with the permission `orbiseconomy.balancetop.exclude` from the list
     # Default: false
     consider-exclude-permission: false
 
@@ -69,6 +69,27 @@ settings:
     #      - Currently supports: vanilla bans, LiteBans
     # Default: false
     exclude-permanently-banned-players: false
+
+  # Settings related to Orbs, the premier currency of Orbis
+  orbs:
+
+    # The maximum number of Orbs a player can have
+    # Default: 10000000000000
+    max-balance: "10000000000000"
+
+    # Your Orbs currency name (singular)
+    # Default: "Orb"
+    name-singular: "Orb"
+
+    # Your Orbs currency name (plural)
+    # Default: "Orbs"
+    name-plural: "Orbs"
+
+    # The format in which Orbs will be displayed
+    #      - <amount> will be replaced with the amount of Orbs
+    #      - <name> will be replaced with the Orbs currency name
+    # Default: "<amount> <name>"
+    format: "<amount> <name>"
 
   # Settings related to commands
   commands:
@@ -113,28 +134,34 @@ settings:
       aliases:
         - "eco"
 
+    # The "/orbs" command
+    orbs:
+      name: "orbs"
+      description: "Manage Orbs, the premier currency of Orbis."
+      aliases: []
+
   # Settings related to PlaceholderAPI placeholders
   placeholders:
 
-    # What the %theosiseconomy_richest_<position>_name% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # What the %orbiseconomy_richest_<position>_name% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
     balancetop-position-name-none: "N/A"
 
-    # What the %theosiseconomy_richest_<position>_uuid% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # What the %orbiseconomy_richest_<position>_uuid% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
     balancetop-position-uuid-none: "N/A"
 
-    # What the %theosiseconomy_richest_<position>_balance% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # What the %orbiseconomy_richest_<position>_balance% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
     balancetop-position-balance-none: "N/A"
 
-    # What the %theosiseconomy_richest_<position>_balance_formatted% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # What the %orbiseconomy_richest_<position>_balance_formatted% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
     balancetop-position-balance_formatted-none: "N/A"
 
-    # What the %theosiseconomy_richest_<position>_entry% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # What the %orbiseconomy_richest_<position>_entry% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
     balancetop-position-entry-none: "N/A"
 
-    # What the %theosiseconomy_richest_<position>_entry_legacy% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # What the %orbiseconomy_richest_<position>_entry_legacy% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
     balancetop-position-entry-legacy-none: "N/A"
 
-  # Settings related to the logging of important things that TheosisEconomy does
+  # Settings related to the logging of important things that OrbisEconomy does
   #      - Log messages do not support colour codes; they should just be plain strings
   logging:
 
@@ -144,7 +171,7 @@ settings:
     # Whether logs should be saved to a file named "logs.log"
     log-file: true
 
-    # When TheosisEconomy successfully creates an account for a player (this happens when they join the server, and don't already have an account)
+    # When OrbisEconomy successfully creates an account for a player (this happens when they join the server, and don't already have an account)
     account-creation-success:
 
       # Whether to log this
@@ -157,7 +184,7 @@ settings:
       #       - <default_balance> will be replaced with the configured default balance
       message: "Created account for <player> (<uuid>) with a default balance of <default_balance>."
 
-    # When TheosisEconomy tries to create an account for a player, but fails because either the default balance is negative, uses more decimal places than what the currency is configured to use, or exceeds the configured maximum balance
+    # When OrbisEconomy tries to create an account for a player, but fails because either the default balance is negative, uses more decimal places than what the currency is configured to use, or exceeds the configured maximum balance
     account-creation-fail:
 
       # Whether to log this
@@ -195,7 +222,7 @@ settings:
       #       - <default_balance> will be replaced with the configured default balance
       message: "Reset <player>'s (<uuid>) balance to the default balance (<default_balance>)."
 
-    # When a plugin tells TheosisEconomy to withdraw money from a player's balance, and the operation is successful
+    # When a plugin tells OrbisEconomy to withdraw money from a player's balance, and the operation is successful
     vault-withdraw-success:
 
       # Whether to log this
@@ -209,7 +236,7 @@ settings:
       #       - <balance> will be replaced with the player's resulting balance
       message: "Withdrew <amount> from <player>'s (<uuid>) balance. They now have <balance>."
 
-    # When a plugin tells TheosisEconomy to withdraw money from a player's balance, but the operation fails because either the player does not have sufficient funds, the amount uses more decimal places than what the currency is configured to use, or is negative
+    # When a plugin tells OrbisEconomy to withdraw money from a player's balance, but the operation fails because either the player does not have sufficient funds, the amount uses more decimal places than what the currency is configured to use, or is negative
     vault-withdraw-fail:
 
       # Whether to log this
@@ -223,7 +250,7 @@ settings:
       #       - <error_message> will be replaced with the error message
       message: "Failed to withdraw <amount> from <player>'s (<uuid>) balance. Error message: <error_message>"
 
-    # When a plugin tells TheosisEconomy to deposit money to a player's balance, and the operation is successful
+    # When a plugin tells OrbisEconomy to deposit money to a player's balance, and the operation is successful
     vault-deposit-success:
 
       # Whether to log this
@@ -237,7 +264,7 @@ settings:
       #       - <balance> will be replaced with the player's resulting balance
       message: "Deposited <amount> to <player>'s (<uuid>) balance. They now have <balance>."
 
-    # When a plugin tells TheosisEconomy to deposit money to a player's balance, but the operation fails because either it would result in the player's balance exceeding the configured maximum, the amount uses more decimal places than what the currency is configured to use, or is negative
+    # When a plugin tells OrbisEconomy to deposit money to a player's balance, but the operation fails because either it would result in the player's balance exceeding the configured maximum, the amount uses more decimal places than what the currency is configured to use, or is negative
     vault-deposit-fail:
 
       # Whether to log this
@@ -388,6 +415,62 @@ messages:
     # When a player stops accepting payments from other players
     disabled: "<dark_aqua>You are no longer accepting payments from other players.</dark_aqua>"
 
+  # Messages related to the "/orbs" command
+  orbs:
+
+    # When a player checks their own Orbs balance
+    #      - <balance> will be replaced with the player's Orbs balance
+    your-balance: "<dark_aqua>You have <light_purple><balance></light_purple>.</dark_aqua>"
+
+    # When a player checks another player's Orbs balance
+    #      - <target> will be replaced with the target's username
+    #      - <balance> will be replaced with the target's Orbs balance
+    their-balance: "<dark_aqua><light_purple><target></light_purple> has <light_purple><balance></light_purple>.</dark_aqua>"
+
+    # Messages related to the "give" sub-command
+    give:
+
+      # What the target receives upon having Orbs given to them
+      #      - <amount> will be replaced with the amount of Orbs given
+      orbs-given-target: "<dark_aqua><light_purple><amount></light_purple> has been added to your Orbs balance.</dark_aqua>"
+
+      # What the command sender receives upon giving Orbs to a player
+      #      - <target> will be replaced with the target's username
+      #      - <amount> will be replaced with the amount of Orbs given
+      orbs-given-sender: "<dark_aqua>Given <light_purple><amount></light_purple> to <light_purple><target></light_purple>.</dark_aqua>"
+
+    # Messages related to the "take" sub-command
+    take:
+
+      # What the target receives upon having Orbs taken from them
+      #      - <amount> will be replaced with the amount of Orbs taken
+      orbs-taken-target: "<dark_aqua><light_purple><amount></light_purple> has been taken from your Orbs balance.</dark_aqua>"
+
+      # What the command sender receives upon taking Orbs from a player
+      #      - <target> will be replaced with the target's username
+      #      - <amount> will be replaced with the amount of Orbs taken
+      orbs-taken-sender: "<dark_aqua>Took <light_purple><amount></light_purple> from <light_purple><target></light_purple>.</dark_aqua>"
+
+    # Messages related to the "set" sub-command
+    set:
+
+      # What the target receives upon their Orbs balance being set
+      #      - <amount> will be replaced with the amount the target's Orbs balance was set to
+      orbs-set-target: "<dark_aqua>Your Orbs balance has been set to <light_purple><amount></light_purple>.</dark_aqua>"
+
+      # What the command sender receives upon setting the Orbs balance of a player
+      #      - <target> will be replaced with the target's username
+      #      - <amount> will be replaced with the amount the target's Orbs balance was set to
+      orbs-set-sender: "<dark_aqua>Set the Orbs balance of <light_purple><target></light_purple> to <light_purple><amount></light_purple>.</dark_aqua>"
+
+    # When no or an incorrect sub-command is used
+    help: |-
+      <gray>----------(<light_purple>Orbs Management</light_purple>)----------</gray>
+      <gray>-</gray> <click:suggest_command:/orbs balance><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs balance [player]</light_purple></hover></click> <gray>-</gray> <dark_aqua>Check your own or another player's Orbs balance</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/orbs give ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs give <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Add the specified amount of Orbs to the specified player's balance</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/orbs take ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs take <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Take the specified amount of Orbs from the specified player's balance</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/orbs set ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs set <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Set the specified player's Orbs balance to the specified amount</dark_aqua>
+
   # Error messages
   error:
 
@@ -460,7 +543,7 @@ messages:
 
     # When the "/economy reset" command is used on a player, but it would result in their balance being negative
     #      - <target> will be replaced with the target's username
-    negative-default-balance: "<red>The default balance is currently configured to be negative. This means that resetting <gold><target></gold>'s balance would result in their balance being negative, and TheosisEconomy does not support negative balances.</red>"
+    negative-default-balance: "<red>The default balance is currently configured to be negative. This means that resetting <gold><target></gold>'s balance would result in their balance being negative, and OrbisEconomy does not support negative balances.</red>"
 
     # When the "/economy reset" command is used on a player, but it would result in the number of decimal places in their balance being higher than what the currency is configured to use
     #      - <target> will be replaced with the target's username
