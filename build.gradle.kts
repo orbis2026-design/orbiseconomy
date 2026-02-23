@@ -3,6 +3,10 @@ plugins {
     id("com.gradleup.shadow") version "9.3.0"
 }
 
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+}
+
 group = "me.Short.OrbisEconomy"
 version = "2.0.0"
 
