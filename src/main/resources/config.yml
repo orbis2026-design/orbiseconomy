@@ -5,46 +5,109 @@
 ################################################
 settings:
 
-  # Settings related to your currency
-  currency:
+  # Settings related to your currencies
+  #   - The first currency listed is treated as the "default" currency (used by Vault and as the default for /pay, /balance, etc.)
+  #   - Add or remove currencies freely; each will be registered automatically including EconomyBridge providers for OrbisLoot
+  currencies:
 
-    # The balance a new player will start with, and what "/economy reset <player>" will set the target player's balance to
-    #      - OrbisEconomy does not support negative balances
-    # Default: 0.00
-    default-balance: 0.00
+    # The default currency - used by Vault for legacy plugin support
+    coins:
 
-    # The maximum balance a player can have
-    #      - Due to limitations of the Java "double" variable type, which Vault uses, this is limited depending on the number of decimal places you allow for your currency
-    #      - The default value is 10 trillion, assuming you want to use 2 decimal places
-    #      - If you want to use more than 2 decimal places, move the decimal point to the LEFT (e.g. for 4 decimal places, the max-balance value would become 100000000000.0000, which is 100 billion)
-    #      - If you want to use less than 2 decimal places, move the decimal point to the RIGHT (e.g. for a whole number, you can just set the max-balance value to 1000000000000000, which is 1 quadrillion)
-    #      - If you set the max-balance value to more than what the rules above allow, you will most likely experience precision loss, so I would strongly recommend not doing that
-    # Default: 10000000000000.00
-    max-balance: 10000000000000.00
+      # The currency name (singular)
+      # Default: "Coin"
+      name-singular: "Coin"
 
-    # The number of decimal places you want your currency to use
-    # Default: 2
-    decimal-places: 2
+      # The currency name (plural)
+      # Default: "Coins"
+      name-plural: "Coins"
 
-    # Your currency name (singular)
-    # Default: "Orb"
-    name-singular: "Orb"
+      # The balance a new player will start with, and what "/economy reset <player> coins" will set the target player's balance to
+      #      - OrbisEconomy does not support negative balances
+      # Default: 0.00
+      default-balance: 0.00
 
-    # Your currency name (plural)
-    # Default: "Orbs"
-    name-plural: "Orbs"
+      # The maximum balance a player can have
+      #      - Due to limitations of the Java "double" variable type, which Vault uses, this is limited depending on the number of decimal places you allow
+      # Default: 10000000000000.00
+      max-balance: 10000000000000.00
 
-    # The format in which your currency will be displayed
-    #      - <amount> will be replaced with the amount of money
-    #      - <name> will be replaced with your currency name
-    # Default: "<amount> <name>"
-    format: "<amount> <name>"
+      # The number of decimal places to use
+      # Default: 2
+      decimal-places: 2
 
-    # What type of rounding should occur when an amount of money uses more decimal places than what the currency is configured to use
-    #      - Valid values are NONE, ROUND_NEAREST, ROUND_UP, and ROUND_DOWN
-    #      - If set to NONE, no rounding will occur, and the amount will not be accepted
-    # Default: NONE
-    rounding-mode: NONE
+      # The format in which amounts will be displayed
+      #      - <amount> will be replaced with the formatted amount
+      #      - <name> will be replaced with the currency name
+      # Default: "<amount> <name>"
+      format: "<amount> <name>"
+
+      # What type of rounding should occur when an amount uses more decimal places than the currency is configured to use
+      #      - Valid values are NONE, ROUND_NEAREST, ROUND_UP, and ROUND_DOWN
+      #      - If set to NONE, no rounding will occur, and the amount will not be accepted
+      # Default: NONE
+      rounding-mode: NONE
+
+    # Orbs - the premier currency of Orbis
+    orbs:
+
+      # The currency name (singular)
+      # Default: "Orb"
+      name-singular: "Orb"
+
+      # The currency name (plural)
+      # Default: "Orbs"
+      name-plural: "Orbs"
+
+      # Default balance for new players
+      # Default: 0
+      default-balance: 0
+
+      # The maximum number of Orbs a player can have
+      # Default: 10000000000000
+      max-balance: "10000000000000"
+
+      # Orbs are whole numbers
+      # Default: 0
+      decimal-places: 0
+
+      # The format in which Orbs amounts will be displayed
+      # Default: "<amount> <name>"
+      format: "<amount> <name>"
+
+      # Rounding mode for Orbs
+      # Default: NONE
+      rounding-mode: NONE
+
+    # Vote Points - awarded for voting on server listing sites
+    votepoints:
+
+      # The currency name (singular)
+      # Default: "Vote Point"
+      name-singular: "Vote Point"
+
+      # The currency name (plural)
+      # Default: "Vote Points"
+      name-plural: "Vote Points"
+
+      # Default balance for new players
+      # Default: 0
+      default-balance: 0
+
+      # The maximum number of Vote Points a player can have
+      # Default: 1000000
+      max-balance: "1000000"
+
+      # Vote Points are whole numbers
+      # Default: 0
+      decimal-places: 0
+
+      # The format in which Vote Point amounts will be displayed
+      # Default: "<amount> <name>"
+      format: "<amount> <name>"
+
+      # Rounding mode for Vote Points
+      # Default: NONE
+      rounding-mode: NONE
 
   # Settings related to the "/balancetop" command
   balancetop:
@@ -69,27 +132,6 @@ settings:
     #      - Currently supports: vanilla bans, LiteBans
     # Default: false
     exclude-permanently-banned-players: false
-
-  # Settings related to Orbs, the premier currency of Orbis
-  orbs:
-
-    # The maximum number of Orbs a player can have
-    # Default: 10000000000000
-    max-balance: "10000000000000"
-
-    # Your Orbs currency name (singular)
-    # Default: "Orb"
-    name-singular: "Orb"
-
-    # Your Orbs currency name (plural)
-    # Default: "Orbs"
-    name-plural: "Orbs"
-
-    # The format in which Orbs will be displayed
-    #      - <amount> will be replaced with the amount of Orbs
-    #      - <name> will be replaced with the Orbs currency name
-    # Default: "<amount> <name>"
-    format: "<amount> <name>"
 
   # Settings related to commands
   commands:

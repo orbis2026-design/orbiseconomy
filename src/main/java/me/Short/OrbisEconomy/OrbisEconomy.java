@@ -19,6 +19,7 @@ import net.milkbowl.vault.permission.Permission;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -98,6 +99,9 @@ public class OrbisEconomy extends JavaPlugin
     // Whether LiteBans is installed - for checking in the "updateBalanceTop" method
     private boolean liteBansInstalled;
 
+    // Registry of all configured currencies, keyed by currency ID (e.g. "coins", "orbs")
+    private Map<String, Currency> currencies;
+
     // Config options that may need to be retrieved in the "updateBalanceTop" method later
     private boolean balanceTopConsiderExcludePermission;
     private boolean balanceTopExcludePermanentlyBannedPlayers;
@@ -108,6 +112,9 @@ public class OrbisEconomy extends JavaPlugin
     {
         // Set up config.yml
         saveDefaultConfig();
+
+        // Load currency registry from config
+        currencies = loadCurrencies();
 
         // Set "dirtyPlayerAccountSnapshots"
         dirtyPlayerAccountSnapshots = new ConcurrentHashMap<>();
@@ -175,6 +182,12 @@ public class OrbisEconomy extends JavaPlugin
         if (pluginManager.getPlugin("PlaceholderAPI") != null)
         {
             new PlaceholderAPI(this).register();
+        }
+
+        // Register EconomyBridge providers, if EconomyBridge is installed
+        if (pluginManager.getPlugin("EconomyBridge") != null)
+        {
+            new EconomyBridgeIntegration(this).register();
         }
 
         // Get whether LiteBans is installed
@@ -285,7 +298,9 @@ public class OrbisEconomy extends JavaPlugin
 
                 try (FileReader reader = new FileReader(file))
                 {
-                    playerAccounts.put(uuid, gson.fromJson(reader, PlayerAccount.class));
+                    PlayerAccount account = gson.fromJson(reader, PlayerAccount.class);
+                    account.migrateFromLegacy();
+                    playerAccounts.put(uuid, account);
                 }
             }
             catch (IllegalArgumentException exception)
@@ -435,6 +450,9 @@ public class OrbisEconomy extends JavaPlugin
         // Reload config.yml from disk
         reloadConfig();
 
+        // Reload currency registry
+        currencies = loadCurrencies();
+
         // Re-get values from config that were retrieved in "onEnable"
         balanceTopConsiderExcludePermission = getConfig().getBoolean("settings.balancetop.consider-exclude-permission");
         balanceTopExcludePermanentlyBannedPlayers = getConfig().getBoolean("settings.balancetop.exclude-permanently-banned-players");
@@ -527,6 +545,54 @@ public class OrbisEconomy extends JavaPlugin
         scheduleBalanceTopUpdateTask();
     }
 
+    // Method to load the currency registry from config.yml
+    private Map<String, Currency> loadCurrencies()
+    {
+        Map<String, Currency> result = new LinkedHashMap<>();
+
+        ConfigurationSection section = getConfig().getConfigurationSection("settings.currencies");
+
+        if (section != null)
+        {
+            for (String id : section.getKeys(false))
+            {
+                String path = "settings.currencies." + id + ".";
+
+                try
+                {
+                    String nameSingular = getConfig().getString(path + "name-singular", id);
+                    String namePlural = getConfig().getString(path + "name-plural", id);
+                    BigDecimal defaultBalance = new BigDecimal(getConfig().getString(path + "default-balance", "0")).stripTrailingZeros();
+                    BigDecimal maxBalance = new BigDecimal(getConfig().getString(path + "max-balance", "10000000000000"));
+                    int decimalPlaces = getConfig().getInt(path + "decimal-places", 0);
+                    String format = getConfig().getString(path + "format", "<amount> <name>");
+                    RoundingMode roundingMode = RoundingMode.valueOf(getConfig().getString(path + "rounding-mode", "NONE"));
+
+                    result.put(id, new Currency(id, nameSingular, namePlural, defaultBalance, maxBalance, decimalPlaces, format, roundingMode));
+                }
+                catch (NumberFormatException | IllegalArgumentException exception)
+                {
+                    getLogger().log(Level.WARNING, "Failed to load currency '" + id + "' from config: " + exception.getMessage());
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // Method to create a new PlayerAccount with default balances for all configured currencies
+    public PlayerAccount createDefaultAccount()
+    {
+        Map<String, BigDecimal> balances = new HashMap<>();
+
+        for (Map.Entry<String, Currency> entry : currencies.entrySet())
+        {
+            balances.put(entry.getKey(), entry.getValue().getDefaultBalance());
+        }
+
+        return new PlayerAccount(balances, true);
+    }
+
     // ----- Getters -----
 
     // Getter for "dirtyPlayerAccountSnapshots"
@@ -569,6 +635,12 @@ public class OrbisEconomy extends JavaPlugin
     public LegacyComponentSerializer getLegacyComponentSerializer()
     {
         return legacyComponentSerializer;
+    }
+
+    // Getter for "currencies"
+    public Map<String, Currency> getCurrencies()
+    {
+        return currencies;
     }
 
 }

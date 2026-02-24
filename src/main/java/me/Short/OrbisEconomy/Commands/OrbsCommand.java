@@ -239,7 +239,7 @@ public class OrbsCommand
         BigDecimal newBalance = account.getOrbsBalance().add(amount);
 
         // Check max balance
-        BigDecimal maxBalance = new BigDecimal(instance.getConfig().getString("settings.orbs.max-balance"));
+        BigDecimal maxBalance = new BigDecimal(instance.getConfig().getString("settings.currencies.orbs.max-balance"));
         if (newBalance.compareTo(maxBalance) > 0)
         {
             ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.would-exceed-max-balance"),
@@ -342,7 +342,7 @@ public class OrbsCommand
         }
 
         // Check max balance
-        BigDecimal maxBalance = new BigDecimal(instance.getConfig().getString("settings.orbs.max-balance"));
+        BigDecimal maxBalance = new BigDecimal(instance.getConfig().getString("settings.currencies.orbs.max-balance"));
         if (amount.compareTo(maxBalance) > 0)
         {
             ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.would-exceed-max-balance"),
@@ -376,9 +376,9 @@ public class OrbsCommand
     // Helper method to format an Orbs amount using the configured format
     private static String formatOrbs(OrbisEconomy instance, BigDecimal amount)
     {
-        String nameSingular = instance.getConfig().getString("settings.orbs.name-singular");
-        String namePlural = instance.getConfig().getString("settings.orbs.name-plural");
-        String format = instance.getConfig().getString("settings.orbs.format");
+        String nameSingular = instance.getConfig().getString("settings.currencies.orbs.name-singular");
+        String namePlural = instance.getConfig().getString("settings.currencies.orbs.name-plural");
+        String format = instance.getConfig().getString("settings.currencies.orbs.format");
 
         String name = amount.compareTo(BigDecimal.ONE) == 0 ? nameSingular : namePlural;
 
