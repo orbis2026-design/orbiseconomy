@@ -270,7 +270,7 @@ public class OrbisEconomy extends JavaPlugin
     // Method to cache all player accounts from their respective JSON files in the "player-accounts" folder
     private Map<UUID, PlayerAccount> cachePlayerAccounts()
     {
-        Map<UUID, PlayerAccount> playerAccounts = new HashMap<>();
+        Map<UUID, PlayerAccount> playerAccounts = new ConcurrentHashMap<>();
 
         File playerAccountsFolder = new File(getDataFolder(), "player-accounts");
 
@@ -324,7 +324,7 @@ public class OrbisEconomy extends JavaPlugin
         updateBalanceTopTask = Bukkit.getScheduler().runTaskTimer(this, () ->
         {
             // Don't update BalanceTop if a task is already running
-            if (updateBalanceTopTaskRunning.compareAndSet(false, true))
+            if (!updateBalanceTopTaskRunning.compareAndSet(false, true))
             {
                 return;
             }
@@ -338,6 +338,7 @@ public class OrbisEconomy extends JavaPlugin
             // If the event was cancelled, return
             if (balanceTopSortEvent.isCancelled())
             {
+                updateBalanceTopTaskRunning.set(false);
                 return;
             }
 
@@ -570,7 +571,7 @@ public class OrbisEconomy extends JavaPlugin
 
                     result.put(id, new Currency(id, nameSingular, namePlural, defaultBalance, maxBalance, decimalPlaces, format, roundingMode));
                 }
-                catch (NumberFormatException | IllegalArgumentException exception)
+                catch (IllegalArgumentException exception)
                 {
                     getLogger().log(Level.WARNING, "Failed to load currency '" + id + "' from config: " + exception.getMessage());
                 }
@@ -583,7 +584,7 @@ public class OrbisEconomy extends JavaPlugin
     // Method to create a new PlayerAccount with default balances for all configured currencies
     public PlayerAccount createDefaultAccount()
     {
-        Map<String, BigDecimal> balances = new HashMap<>();
+        Map<String, BigDecimal> balances = new ConcurrentHashMap<>();
 
         for (Map.Entry<String, Currency> entry : currencies.entrySet())
         {
