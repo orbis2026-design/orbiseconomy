@@ -3,6 +3,7 @@ package me.Short.OrbisEconomy;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerAccount
 {
@@ -21,7 +22,7 @@ public class PlayerAccount
     // Constructor
     public PlayerAccount(Map<String, BigDecimal> balances, boolean acceptingPayments)
     {
-        this.balances = balances;
+        this.balances = new ConcurrentHashMap<>(balances);
         this.acceptingPayments = acceptingPayments;
     }
 
@@ -30,7 +31,7 @@ public class PlayerAccount
     {
         if (balances == null)
         {
-            balances = new HashMap<>();
+            balances = new ConcurrentHashMap<>();
             if (balance != null)
             {
                 balances.put("coins", balance);
@@ -39,6 +40,10 @@ public class PlayerAccount
             {
                 balances.put("orbs", orbsBalance);
             }
+        }
+        else
+        {
+            balances = new ConcurrentHashMap<>(balances);
         }
         // Clear legacy fields so they are not carried in memory unnecessarily
         balance = null;
