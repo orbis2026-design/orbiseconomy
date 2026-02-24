@@ -2,18 +2,19 @@ package me.Short.OrbisEconomy.Commands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
+import me.Short.OrbisEconomy.Currency;
 import me.Short.OrbisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
 import me.Short.OrbisEconomy.Events.PlayerPayPlayerEvent;
 import me.Short.OrbisEconomy.OrbisEconomy;
+import me.Short.OrbisEconomy.PlayerAccount;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.milkbowl.vault.economy.Economy;
-import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -23,6 +24,8 @@ import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @NullMarked
@@ -31,191 +34,239 @@ public class PayCommand
 
     public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, OrbisEconomy instance)
     {
-        return Commands.literal(commandName)
+        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(commandName)
 
                 // Require permission
                 .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.pay"))
 
                 .executes(ctx ->
                 {
-                    // Send the sender a message showing the command usage of this branch
                     ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
                             Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
                             Placeholder.component("argument_usage", Component.text("<player name> <amount>"))));
+                    return Command.SINGLE_SUCCESS;
+                });
 
+        // Dynamic currency literal nodes: /pay <currencyId> <player> <amount>
+        for (String currencyId : instance.getCurrencies().keySet())
+        {
+            final String fid = currencyId;
+            root.then(Commands.literal(currencyId)
+
+                    .executes(ctx ->
+                    {
+                        ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
+                                Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
+                                Placeholder.component("argument_usage", Component.text(fid + " <player name> <amount>"))));
+                        return Command.SINGLE_SUCCESS;
+                    })
+
+                    .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
+
+                            .suggests((ctx, builder) -> CompletableFuture.supplyAsync(() ->
+                            {
+                                if (ctx.getSource().getSender() instanceof Player senderPlayer)
+                                {
+                                    instance.getOfflinePlayerNames().values().stream()
+                                            .filter(name -> !name.equals(senderPlayer.getName()) && name.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
+                                            .forEach(builder::suggest);
+                                }
+                                else
+                                {
+                                    instance.getOfflinePlayerNames().values().stream()
+                                            .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
+                                            .forEach(builder::suggest);
+                                }
+                                return builder.build();
+                            }))
+
+                            .executes(ctx ->
+                            {
+                                ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
+                                        Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
+                                        Placeholder.component("argument_usage", Component.text(fid + " <player name> <amount>"))));
+                                return Command.SINGLE_SUCCESS;
+                            })
+
+                            .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
+
+                                    .executes(ctx ->
+                                    {
+                                        executeCommandLogic(instance, ctx,
+                                                ctx.getArgument("target player", OfflinePlayer.class),
+                                                BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros(),
+                                                fid);
+                                        return Command.SINGLE_SUCCESS;
+                                    })
+                            )
+                    )
+            );
+        }
+
+        // Default: /pay <player> <amount> -> coins
+        root.then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
+
+                .suggests((ctx, builder) -> CompletableFuture.supplyAsync(() ->
+                {
+                    if (ctx.getSource().getSender() instanceof Player senderPlayer)
+                    {
+                        instance.getOfflinePlayerNames().values().stream()
+                                .filter(name -> !name.equals(senderPlayer.getName()) && name.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
+                                .forEach(builder::suggest);
+                    }
+                    else
+                    {
+                        instance.getOfflinePlayerNames().values().stream()
+                                .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
+                                .forEach(builder::suggest);
+                    }
+                    return builder.build();
+                }))
+
+                .executes(ctx ->
+                {
+                    ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
+                            Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
+                            Placeholder.component("argument_usage", Component.text("<player name> <amount>"))));
                     return Command.SINGLE_SUCCESS;
                 })
 
-                .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
-
-                        .suggests((ctx, builder) -> CompletableFuture.supplyAsync(() ->
-                        {
-                            if (ctx.getSource().getSender() instanceof Player senderPlayer)
-                            {
-                                instance.getOfflinePlayerNames().values().stream()
-                                        .filter(name -> !name.equals(senderPlayer.getName()) && name.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
-                                        .forEach(builder::suggest);
-                            }
-                            else
-                            {
-                                instance.getOfflinePlayerNames().values().stream()
-                                        .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
-                                        .forEach(builder::suggest);
-                            }
-
-                            return builder.build();
-                        }))
+                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
 
                         .executes(ctx ->
                         {
-                            // Send the sender a message showing the command usage of this branch
-                            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
-                                    Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
-                                    Placeholder.component("argument_usage", Component.text("<player name> <amount>"))));
-
+                            executeCommandLogic(instance, ctx,
+                                    ctx.getArgument("target player", OfflinePlayer.class),
+                                    BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros(),
+                                    "coins");
                             return Command.SINGLE_SUCCESS;
                         })
+                )
+        );
 
-                        .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
-
-                                .executes(ctx ->
-                                {
-                                    executeCommandLogic(instance, ctx, ctx.getArgument("target player", OfflinePlayer.class), BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros());
-
-                                    return Command.SINGLE_SUCCESS;
-                                })
-                        )
-                ).build();
+        return root.build();
     }
 
-    // Method to execute the command logic
-    private static void executeCommandLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
+    // Method to execute the command logic for any currency
+    private static void executeCommandLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount, String currencyId)
     {
         final CommandSender sender = ctx.getSource().getSender();
 
-        // If the sender is not player, return, because only players can pay money
+        // Only players can pay money
         if (!(sender instanceof Player senderPlayer))
         {
             sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.console-cannot-use")));
-
             return;
         }
 
-        // If the target player is the sender, return, because players cannot pay themselves
-        if (target == sender)
+        // Players cannot pay themselves
+        if (target.getUniqueId().equals(senderPlayer.getUniqueId()))
         {
             sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.cannot-pay-yourself")));
-
             return;
         }
 
-        Economy economy = instance.getEconomy();
+        Map<UUID, PlayerAccount> playerAccounts = instance.getPlayerAccounts();
 
-        // If the sender does not have an account, return
-        if (!economy.hasAccount(senderPlayer))
+        // Sender must have an account
+        if (!playerAccounts.containsKey(senderPlayer.getUniqueId()))
         {
             senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account")));
-
             return;
         }
 
-        // If the target player does not have an account, return
-        if (!economy.hasAccount(target))
+        // Target must have an account
+        if (!playerAccounts.containsKey(target.getUniqueId()))
         {
             senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
                     Placeholder.component("target", Component.text(target.getName()))));
-
             return;
         }
 
-        // If the target player is not accepting payments, return
-        if (!instance.getPlayerAccounts().get(target.getUniqueId()).getAcceptingPayments())
+        // Target must be accepting payments
+        if (!playerAccounts.get(target.getUniqueId()).getAcceptingPayments())
         {
             senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-accepting-payments"),
                     Placeholder.component("target", Component.text(target.getName()))));
-
             return;
         }
 
-        // Call PlayerPayPlayerEvent event
+        // Fire PlayerPayPlayerEvent
         PlayerPayPlayerEvent playerPayPlayerEvent = new PlayerPayPlayerEvent(senderPlayer, target, amount);
         Bukkit.getServer().getPluginManager().callEvent(playerPayPlayerEvent);
 
-        // If the event is cancelled, return
         if (playerPayPlayerEvent.isCancelled())
         {
             return;
         }
 
-        // Reassign variables in case a plugin listening for the event changed them
+        // Re-assign variables in case a plugin modified them via the event
         senderPlayer = playerPayPlayerEvent.getSender();
         target = playerPayPlayerEvent.getRecipient();
         amount = playerPayPlayerEvent.getAmount();
 
-        double amountAsDouble = amount.doubleValue(); // For passing into the Economy methods, as they only take doubles
+        Currency currency = instance.getCurrencies().get(currencyId);
 
-        // If the sender does not have enough money to pay the amount specified, return
-        if (!economy.has(senderPlayer, amountAsDouble))
+        if (currency == null)
+        {
+            senderPlayer.sendMessage(instance.getMiniMessage().deserialize("<red>Unknown currency: " + currencyId + "</red>"));
+            return;
+        }
+
+        // Validate amount precision
+        if (amount.scale() > currency.getDecimalPlaces())
+        {
+            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.too-many-decimal-places-amount"),
+                    Placeholder.component("amount", Component.text(amount.toPlainString())),
+                    Placeholder.component("decimal_places", Component.text(currency.getDecimalPlaces()))));
+            return;
+        }
+
+        // Amount must be greater than zero
+        if (amount.compareTo(BigDecimal.ZERO) <= 0)
+        {
+            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
+            return;
+        }
+
+        PlayerAccount senderAccount = playerAccounts.get(senderPlayer.getUniqueId());
+        BigDecimal senderBalance = senderAccount.getBalance(currencyId);
+
+        // Sender must have enough funds
+        if (senderBalance.compareTo(amount) < 0)
         {
             senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.insufficient-funds"),
-                    Placeholder.component("amount", Component.text(economy.format(amountAsDouble)))));
-
+                    Placeholder.component("amount", Component.text(currency.formatAmount(amount)))));
             return;
         }
 
-        // Try to withdraw the amount from the sender
-        EconomyResponse withdrawPlayerResponse = economy.withdrawPlayer(senderPlayer, amountAsDouble);
+        PlayerAccount targetAccount = playerAccounts.get(target.getUniqueId());
+        BigDecimal targetBalance = targetAccount.getBalance(currencyId);
+        BigDecimal newTargetBalance = targetBalance.add(amount);
 
-        // If the withdrawal was unsuccessful, return
-        if (!withdrawPlayerResponse.transactionSuccess())
+        // Target balance must not exceed max
+        if (newTargetBalance.compareTo(currency.getMaxBalance()) > 0)
         {
-            String errorMessage = withdrawPlayerResponse.errorMessage;
-
-            if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorTooManyDecimalPlaces()))
-            {
-                senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.too-many-decimal-places-amount"),
-                        Placeholder.component("amount", Component.text(amount.toPlainString())),
-                        Placeholder.component("decimal_places", Component.text(economy.fractionalDigits()))));
-            }
-            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorNotGreaterThanZero()))
-            {
-                senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
-            }
-            else if (errorMessage.equals(me.Short.OrbisEconomy.Economy.getErrorInsufficientFunds())) // This should never be the case, since we already checked to make sure the sender has enough money
-            {
-                senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.insufficient-funds"),
-                        Placeholder.component("amount", Component.text(economy.format(amountAsDouble)))));
-            }
-            else // This should also never be able to happen
-            {
-                senderPlayer.sendMessage(instance.getMiniMessage().deserialize("<red>An unknown error occurred when withdrawing money.</red>"));
-            }
-
-            return;
-        }
-
-        // Try to deposit the amount to the target
-        EconomyResponse depositPlayerResponse = economy.depositPlayer(target, amountAsDouble);
-
-        // If the deposit was unsuccessful, deposit the amount back to the sender's balance, and return
-        if (!depositPlayerResponse.transactionSuccess())
-        {
-            // Deposit the amount back into the sender's account
-            economy.depositPlayer(senderPlayer, amountAsDouble);
-
-            // Send error message - this should be the only possible error, since the other errors were ruled out due to the withdrawal being successful
             senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.would-exceed-max-balance"),
                     Placeholder.component("target", Component.text(target.getName()))));
-
             return;
         }
+
+        // Perform the transfer
+        senderAccount.setBalance(currencyId, senderBalance.subtract(amount));
+        targetAccount.setBalance(currencyId, newTargetBalance);
+
+        // Mark both accounts for saving
+        UUID senderUuid = senderPlayer.getUniqueId();
+        UUID targetUuid = target.getUniqueId();
+        instance.getDirtyPlayerAccountSnapshots().put(senderUuid, senderAccount.snapshot());
+        instance.getDirtyPlayerAccountSnapshots().put(targetUuid, targetAccount.snapshot());
 
         FileConfiguration config = instance.getConfig();
         MiniMessage miniMessage = instance.getMiniMessage();
+        String amountFormatted = currency.formatAmount(amount);
 
-        String amountFormatted = economy.format(amountAsDouble);
-
-        // Send message to the target player, if online
+        // Notify the target player if online
         if (target instanceof Player)
         {
             ((Player) target).sendMessage(miniMessage.deserialize(config.getString("messages.pay.paid-target"),
@@ -223,7 +274,7 @@ public class PayCommand
                     Placeholder.component("amount", Component.text(amountFormatted))));
         }
 
-        // Send message to the command sender
+        // Notify the sender
         senderPlayer.sendMessage(miniMessage.deserialize(config.getString("messages.pay.paid-sender"),
                 Placeholder.component("target", Component.text(target.getName())),
                 Placeholder.component("amount", Component.text(amountFormatted))));

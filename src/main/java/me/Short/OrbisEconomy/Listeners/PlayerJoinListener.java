@@ -53,7 +53,7 @@ public class PlayerJoinListener implements Listener
                 instance.getLogger().log(Level.INFO, config.getString("settings.logging.account-creation-success.message")
                         .replace("<player>", playerName)
                         .replace("<uuid>", uuid.toString())
-                        .replace("<default_balance>", new BigDecimal(config.getString("settings.currency.default-balance")).stripTrailingZeros().toPlainString()));
+                        .replace("<default_balance>", new BigDecimal(config.getString("settings.currencies.coins.default-balance")).stripTrailingZeros().toPlainString()));
             }
         }
         else

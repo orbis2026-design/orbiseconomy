@@ -1,20 +1,19 @@
 package me.Short.OrbisEconomy;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 public final class PlayerAccountSnapshot
 {
 
-    private final BigDecimal balance;
+    private final Map<String, BigDecimal> balances;
     private final boolean acceptingPayments;
-    private final BigDecimal orbsBalance;
 
     // Constructor
-    public PlayerAccountSnapshot(BigDecimal balance, boolean acceptingPayments, BigDecimal orbsBalance)
+    public PlayerAccountSnapshot(Map<String, BigDecimal> balances, boolean acceptingPayments)
     {
-        this.balance = balance;
+        this.balances = balances;
         this.acceptingPayments = acceptingPayments;
-        this.orbsBalance = orbsBalance;
     }
 
 }

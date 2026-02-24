@@ -52,7 +52,7 @@ public class Economy implements net.milkbowl.vault.economy.Economy
     @Override
     public int fractionalDigits()
     {
-        return instance.getConfig().getInt("settings.currency.decimal-places");
+        return instance.getConfig().getInt("settings.currencies.coins.decimal-places");
     }
 
     @Override
@@ -72,7 +72,7 @@ public class Economy implements net.milkbowl.vault.economy.Economy
         }
 
         // Return formatted output, applying decimal format to the amount
-        return instance.getConfig().getString("settings.currency.format")
+        return instance.getConfig().getString("settings.currencies.coins.format")
                 .replace("<amount>", df.format(amount))
                 .replace("<name>", amount == 1D ? currencyNameSingular() : currencyNamePlural());
     }
@@ -80,13 +80,13 @@ public class Economy implements net.milkbowl.vault.economy.Economy
     @Override
     public String currencyNamePlural()
     {
-        return instance.getConfig().getString("settings.currency.name-plural");
+        return instance.getConfig().getString("settings.currencies.coins.name-plural");
     }
 
     @Override
     public String currencyNameSingular()
     {
-        return instance.getConfig().getString("settings.currency.name-singular");
+        return instance.getConfig().getString("settings.currencies.coins.name-singular");
     }
 
     @Override
@@ -133,7 +133,7 @@ public class Economy implements net.milkbowl.vault.economy.Economy
         UUID uuid = player.getUniqueId();
 
         BigDecimal currentBalance = instance.getPlayerAccounts().get(uuid).getBalance();
-        BigDecimal bdAmount = Util.round(BigDecimal.valueOf(amount), fractionalDigits(), RoundingMode.valueOf(config.getString("settings.currency.rounding-mode"))).stripTrailingZeros();
+        BigDecimal bdAmount = Util.round(BigDecimal.valueOf(amount), fractionalDigits(), RoundingMode.valueOf(config.getString("settings.currencies.coins.rounding-mode"))).stripTrailingZeros();
         double bdAmountDoubleValue = bdAmount.doubleValue();
 
         // If the amount is 0 or less, log error, and return failure economy response
@@ -221,7 +221,7 @@ public class Economy implements net.milkbowl.vault.economy.Economy
         UUID uuid = player.getUniqueId();
 
         BigDecimal currentBalance = instance.getPlayerAccounts().get(uuid).getBalance();
-        BigDecimal bdAmount = Util.round(BigDecimal.valueOf(amount), fractionalDigits(), RoundingMode.valueOf(config.getString("settings.currency.rounding-mode"))).stripTrailingZeros();
+        BigDecimal bdAmount = Util.round(BigDecimal.valueOf(amount), fractionalDigits(), RoundingMode.valueOf(config.getString("settings.currencies.coins.rounding-mode"))).stripTrailingZeros();
         double bdAmountDoubleValue = bdAmount.doubleValue();
 
         // If the amount is 0 or less, log error, and return failure economy response
@@ -259,7 +259,7 @@ public class Economy implements net.milkbowl.vault.economy.Economy
         BigDecimal resultingBalance = currentBalance.add(bdAmount);
 
         // If the resulting balance is greater than the configured maximum balance, log error, and return failure economy response
-        if (resultingBalance.compareTo(new BigDecimal(config.getString("settings.currency.max-balance"))) > 0)
+        if (resultingBalance.compareTo(new BigDecimal(config.getString("settings.currencies.coins.max-balance"))) > 0)
         {
             // Log the failure to the console if config.yml says to do so
             if (config.getBoolean("settings.logging.vault-deposit-fail.log"))
@@ -304,18 +304,18 @@ public class Economy implements net.milkbowl.vault.economy.Economy
     @Override
     public boolean createPlayerAccount(OfflinePlayer player)
     {
-        BigDecimal defaultBalance = new BigDecimal(instance.getConfig().getString("settings.currency.default-balance")).stripTrailingZeros();
+        BigDecimal defaultBalance = new BigDecimal(instance.getConfig().getString("settings.currencies.coins.default-balance")).stripTrailingZeros();
 
         // If the default balance is less than 0, uses more decimal places than what is configured, or is greater than the configured maximum balance, return `false`, indicating that the account creation was unsuccessful
-        if (defaultBalance.compareTo(BigDecimal.ZERO) < 0 || defaultBalance.scale() > fractionalDigits() || defaultBalance.compareTo(new BigDecimal(instance.getConfig().getString("settings.currency.max-balance"))) > 0)
+        if (defaultBalance.compareTo(BigDecimal.ZERO) < 0 || defaultBalance.scale() > fractionalDigits() || defaultBalance.compareTo(new BigDecimal(instance.getConfig().getString("settings.currencies.coins.max-balance"))) > 0)
         {
             return false;
         }
 
         UUID uuid = player.getUniqueId();
 
-        // Create new player account
-        PlayerAccount account = new PlayerAccount(defaultBalance, true);
+        // Create new player account with default balances for all configured currencies
+        PlayerAccount account = instance.createDefaultAccount();
 
         // Add account to the cache
         instance.getPlayerAccounts().put(uuid, account);
