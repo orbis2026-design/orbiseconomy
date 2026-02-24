@@ -30,6 +30,7 @@ repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
+    maven("https://repo.nightexpressdev.com/releases")
 }
 
 dependencies {
@@ -39,4 +40,6 @@ dependencies {
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("me.clip:placeholderapi:2.11.7")
     compileOnly("com.gitlab.ruany:LiteBansAPI:0.6.1")
+    compileOnly("su.nightexpress.economybridge:economy-bridge:1.2.1")
+    compileOnly("su.nightexpress.nightcore:nightcore:2.7.5")
 }

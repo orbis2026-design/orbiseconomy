@@ -20,6 +20,10 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    EconomyBridge:
+      load: BEFORE
+      required: false
+      join-classpath: true
 
 permissions:
 

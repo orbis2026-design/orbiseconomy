@@ -1,6 +1,15 @@
 package me.Short.OrbisEconomy;
 
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import su.nightexpress.economybridge.EconomyBridge;
+import su.nightexpress.economybridge.api.Currency;
+
+import java.math.BigDecimal;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * EconomyBridge integration for OrbisLoot compatibility.
@@ -33,23 +42,161 @@ public class EconomyBridgeIntegration
      */
     public void register()
     {
-        for (Map.Entry<String, Currency> entry : instance.getCurrencies().entrySet())
+        for (Map.Entry<String, me.Short.OrbisEconomy.Currency> entry : instance.getCurrencies().entrySet())
         {
             String currencyId = entry.getKey();
-            Currency currency = entry.getValue();
+            me.Short.OrbisEconomy.Currency currency = entry.getValue();
 
-            // TODO: Replace this block with the real EconomyBridge registration call once the
-            //       EconomyBridge API dependency is available, e.g.:
-            //
-            //   EconomyBridge.registerProvider(currencyId, new OrbisEconomyBridgeProvider(instance, currency));
-            //
-            // The provider must implement EconomyBridge's provider interface and delegate all
-            // balance reads/writes to instance.getPlayerAccounts().get(uuid).getBalance(currencyId)
-            // and setBalance(currencyId, amount) respectively.
+            EconomyBridge.registerCurrency(new OrbisEconomyBridgeProvider(instance, currency));
 
             instance.getLogger().info("[EconomyBridge] Registered provider for currency: " + currencyId
                     + " (" + currency.getNamePlural() + ")");
         }
+    }
+
+    /**
+     * EconomyBridge {@link Currency} provider that delegates all balance operations to OrbisEconomy's
+     * {@link PlayerAccount} map.
+     */
+    private static class OrbisEconomyBridgeProvider implements Currency
+    {
+
+        private final OrbisEconomy instance;
+        private final me.Short.OrbisEconomy.Currency currency;
+
+        OrbisEconomyBridgeProvider(OrbisEconomy instance, me.Short.OrbisEconomy.Currency currency)
+        {
+            this.instance = instance;
+            this.currency = currency;
+        }
+
+        @Override
+        @NotNull
+        public String getInternalId()
+        {
+            return "orbiseconomy_" + currency.getId();
+        }
+
+        @Override
+        @NotNull
+        public String getOriginalId()
+        {
+            return getInternalId();
+        }
+
+        @Override
+        @NotNull
+        public String getName()
+        {
+            return currency.getNamePlural();
+        }
+
+        @Override
+        @NotNull
+        public String getDefaultName()
+        {
+            return currency.getNamePlural();
+        }
+
+        @Override
+        @NotNull
+        public String getFormat()
+        {
+            // EconomyBridge uses %amount% and %name% as placeholders in format strings
+            return currency.getFormat()
+                    .replace("<amount>", "%amount%")
+                    .replace("<name>", "%name%");
+        }
+
+        @Override
+        @NotNull
+        public ItemStack getIcon()
+        {
+            return new ItemStack(Material.GOLD_NUGGET);
+        }
+
+        @Override
+        @NotNull
+        public ItemStack getDefaultIcon()
+        {
+            return new ItemStack(Material.GOLD_NUGGET);
+        }
+
+        @Override
+        public boolean canHandleDecimals()
+        {
+            return currency.getDecimalPlaces() > 0;
+        }
+
+        @Override
+        public boolean canHandleOffline()
+        {
+            return true;
+        }
+
+        @Override
+        public double getBalance(@NotNull Player player)
+        {
+            return getBalance(player.getUniqueId());
+        }
+
+        @Override
+        public double getBalance(@NotNull UUID playerId)
+        {
+            PlayerAccount account = instance.getPlayerAccounts().get(playerId);
+            if (account == null)
+            {
+                return 0;
+            }
+            return account.getBalance(currency.getId()).doubleValue();
+        }
+
+        @Override
+        public void give(@NotNull Player player, double amount)
+        {
+            give(player.getUniqueId(), amount);
+        }
+
+        @Override
+        public void give(@NotNull UUID playerId, double amount)
+        {
+            PlayerAccount account = instance.getPlayerAccounts().get(playerId);
+            if (account == null)
+            {
+                return;
+            }
+            BigDecimal newBalance = account.getBalance(currency.getId()).add(BigDecimal.valueOf(amount));
+            if (newBalance.compareTo(currency.getMaxBalance()) > 0)
+            {
+                newBalance = currency.getMaxBalance();
+            }
+            account.setBalance(currency.getId(), newBalance);
+            instance.getDirtyPlayerAccountSnapshots().put(playerId, account.snapshot());
+        }
+
+        @Override
+        public void take(@NotNull Player player, double amount)
+        {
+            take(player.getUniqueId(), amount);
+        }
+
+        @Override
+        public void take(@NotNull UUID playerId, double amount)
+        {
+            PlayerAccount account = instance.getPlayerAccounts().get(playerId);
+            if (account == null)
+            {
+                return;
+            }
+            BigDecimal newBalance = account.getBalance(currency.getId()).subtract(BigDecimal.valueOf(amount));
+            if (newBalance.compareTo(BigDecimal.ZERO) < 0)
+            {
+                newBalance = BigDecimal.ZERO;
+            }
+            account.setBalance(currency.getId(), newBalance);
+            instance.getDirtyPlayerAccountSnapshots().put(playerId, account.snapshot());
+        }
+
     }
 
 }
