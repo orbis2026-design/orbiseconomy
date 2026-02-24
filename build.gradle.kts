@@ -41,5 +41,4 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.7")
     compileOnly("com.gitlab.ruany:LiteBansAPI:0.6.1")
     compileOnly("su.nightexpress.economybridge:economy-bridge:1.2.1")
-    compileOnly("su.nightexpress.nightcore:nightcore:2.7.5")
 }
