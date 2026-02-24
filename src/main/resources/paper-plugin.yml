@@ -4,8 +4,6 @@ main: me.Short.OrbisEconomy.OrbisEconomy
 description: A simple, yet customisable and robust, Vault-based economy provider.
 api-version: '1.21.11'
 
-load: STARTUP
-
 dependencies:
   server:
     Vault:
@@ -24,6 +22,10 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    OrbisLoot:
+      load: AFTER
+      required: false
+      join-classpath: false
 
 permissions:
 
