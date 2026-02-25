@@ -6,6 +6,7 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,15 +72,17 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         // %orbiseconomy_top_<currencyId>_<position>_<type>%
-        if (splitParams.length == 4 && splitParams[0].equals("top"))
+        if (splitParams.length >= 4 && splitParams[0].equals("top"))
         {
-            return resolveTopPlaceholder(splitParams[1], splitParams[2], splitParams[3]);
+            String type = String.join("_", Arrays.copyOfRange(splitParams, 3, splitParams.length));
+            return resolveTopPlaceholder(splitParams[1], splitParams[2], type);
         }
 
         // Keep backward compatibility for %orbiseconomy_richest_<position>_<type>% using default "coins" currency
-        if (splitParams.length == 3 && splitParams[0].equals("richest"))
+        if (splitParams.length >= 3 && splitParams[0].equals("richest"))
         {
-            return resolveTopPlaceholder("coins", splitParams[1], splitParams[2]);
+            String type = String.join("_", Arrays.copyOfRange(splitParams, 2, splitParams.length));
+            return resolveTopPlaceholder("coins", splitParams[1], type);
         }
 
         // %orbiseconomy_accepting_payments%
@@ -170,29 +173,76 @@ public class PlaceholderAPI extends PlaceholderExpansion
 
         if (position > topBalances.size())
         {
-            return "N/A";
+            return getTopPlaceholderNoneValue(type);
         }
 
         Map.Entry<UUID, BigDecimal> entry = topBalances.get(position - 1);
+        String normalizedType = type.toLowerCase();
 
-        if (type.equals("name"))
+        if (normalizedType.equals("formatted"))
+        {
+            normalizedType = "balance_formatted";
+        }
+
+        if (normalizedType.equals("name"))
         {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
             String name = offlinePlayer.getName();
             return name == null ? "N/A" : name;
         }
 
-        if (type.equals("balance"))
+        if (normalizedType.equals("uuid"))
+        {
+            return entry.getKey().toString();
+        }
+
+        if (normalizedType.equals("balance"))
         {
             return entry.getValue().toPlainString();
         }
 
-        if (type.equals("formatted"))
+        if (normalizedType.equals("balance_formatted"))
         {
             return currency.formatAmount(entry.getValue());
         }
 
-        return "N/A";
+        if (normalizedType.equals("entry") || normalizedType.equals("entry_legacy"))
+        {
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+            String name = offlinePlayer.getName() == null ? "N/A" : offlinePlayer.getName();
+            String formattedBalance = currency.formatAmount(entry.getValue());
+
+            if (normalizedType.equals("entry_legacy"))
+            {
+                return "§6" + name + "§8: §6" + formattedBalance;
+            }
+
+            return "<gold>" + name + "</gold><dark_gray>: </dark_gray><gold>" + formattedBalance + "</gold>";
+        }
+
+        return getTopPlaceholderNoneValue(type);
+    }
+
+    private String getTopPlaceholderNoneValue(String type)
+    {
+        if (type == null)
+        {
+            return "N/A";
+        }
+
+        String normalizedType = type.toLowerCase();
+
+        if (normalizedType.equals("formatted"))
+        {
+            normalizedType = "balance_formatted";
+        }
+
+        if (normalizedType.equals("entry_legacy"))
+        {
+            return instance.getConfig().getString("settings.placeholders.balancetop-position-entry-legacy-none", "N/A");
+        }
+
+        return instance.getConfig().getString("settings.placeholders.balancetop-position-" + normalizedType + "-none", "N/A");
     }
 
 }

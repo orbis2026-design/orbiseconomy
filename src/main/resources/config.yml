@@ -185,22 +185,22 @@ settings:
   # Settings related to PlaceholderAPI placeholders
   placeholders:
 
-    # What the %orbiseconomy_richest_<position>_name% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # Fallback for %orbiseconomy_top_<currencyId>_<position>_name% and %orbiseconomy_richest_<position>_name%
     balancetop-position-name-none: "N/A"
 
-    # What the %orbiseconomy_richest_<position>_uuid% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # Fallback for %orbiseconomy_top_<currencyId>_<position>_uuid% and %orbiseconomy_richest_<position>_uuid%
     balancetop-position-uuid-none: "N/A"
 
-    # What the %orbiseconomy_richest_<position>_balance% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # Fallback for %orbiseconomy_top_<currencyId>_<position>_balance% and %orbiseconomy_richest_<position>_balance%
     balancetop-position-balance-none: "N/A"
 
-    # What the %orbiseconomy_richest_<position>_balance_formatted% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # Fallback for %orbiseconomy_top_<currencyId>_<position>_balance_formatted% (and alias _formatted) and %orbiseconomy_richest_<position>_balance_formatted%
     balancetop-position-balance_formatted-none: "N/A"
 
-    # What the %orbiseconomy_richest_<position>_entry% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # Fallback for %orbiseconomy_top_<currencyId>_<position>_entry% and %orbiseconomy_richest_<position>_entry%
     balancetop-position-entry-none: "N/A"
 
-    # What the %orbiseconomy_richest_<position>_entry_legacy% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
+    # Fallback for %orbiseconomy_top_<currencyId>_<position>_entry_legacy% and %orbiseconomy_richest_<position>_entry_legacy%
     balancetop-position-entry-legacy-none: "N/A"
 
   # Settings related to the logging of important things that OrbisEconomy does
