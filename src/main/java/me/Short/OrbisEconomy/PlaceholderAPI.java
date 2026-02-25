@@ -53,6 +53,44 @@ public class PlaceholderAPI extends PlaceholderExpansion
     @Override
     public String onRequest(OfflinePlayer player, String params)
     {
+        if (params.toLowerCase().startsWith("balance_formatted_"))
+        {
+            if (player == null || !instance.getPlayerAccounts().containsKey(player.getUniqueId()))
+            {
+                return "0";
+            }
+
+            String currencyId = params.substring("balance_formatted_".length()).toLowerCase();
+            Currency currency = instance.getCurrencies().get(currencyId);
+
+            if (currency == null)
+            {
+                return "0";
+            }
+
+            PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
+            return currency.formatAmount(account.getBalance(currencyId));
+        }
+
+        if (params.toLowerCase().startsWith("balance_"))
+        {
+            if (player == null || !instance.getPlayerAccounts().containsKey(player.getUniqueId()))
+            {
+                return "0";
+            }
+
+            String currencyId = params.substring("balance_".length()).toLowerCase();
+            Currency currency = instance.getCurrencies().get(currencyId);
+
+            if (currency == null)
+            {
+                return "0";
+            }
+
+            PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
+            return account.getBalance(currencyId).toPlainString();
+        }
+
         // %orbiseconomy_accepting_payments%
         if (params.equalsIgnoreCase("accepting_payments"))
         {
