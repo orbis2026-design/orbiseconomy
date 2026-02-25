@@ -6,9 +6,9 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class PlaceholderAPI extends PlaceholderExpansion
@@ -57,32 +57,46 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         String normalizedParams = params.toLowerCase(java.util.Locale.ROOT);
-        String[] splitParams = normalizedParams.split("_");
 
         // %orbiseconomy_balance_<currencyId>%
-        if (splitParams.length == 2 && splitParams[0].equals("balance"))
+        if (normalizedParams.startsWith("balance_"))
         {
-            return resolvePlayerBalance(player, splitParams[1], false);
-        }
+            String currencyId = normalizedParams.substring("balance_".length());
 
-        // %orbiseconomy_balance_formatted_<currencyId>%
-        if (splitParams.length == 3 && splitParams[0].equals("balance") && splitParams[1].equals("formatted"))
-        {
-            return resolvePlayerBalance(player, splitParams[2], true);
+            if (currencyId.startsWith("formatted_"))
+            {
+                return resolvePlayerBalance(player, currencyId.substring("formatted_".length()), true);
+            }
+
+            return resolvePlayerBalance(player, currencyId, false);
         }
 
         // %orbiseconomy_top_<currencyId>_<position>_<type>%
-        if (splitParams.length >= 4 && splitParams[0].equals("top"))
+        if (normalizedParams.startsWith("top_"))
         {
-            String type = String.join("_", Arrays.copyOfRange(splitParams, 3, splitParams.length));
-            return resolveTopPlaceholder(splitParams[1], splitParams[2], type);
+            Optional<TopPlaceholderInput> parsedTop = parseTopPlaceholderInput(normalizedParams.substring("top_".length()), true);
+
+            if (parsedTop.isEmpty())
+            {
+                return "N/A";
+            }
+
+            TopPlaceholderInput placeholderInput = parsedTop.get();
+            return resolveTopPlaceholder(placeholderInput.currencyId(), placeholderInput.position(), placeholderInput.type());
         }
 
         // Keep backward compatibility for %orbiseconomy_richest_<position>_<type>% using default "coins" currency
-        if (splitParams.length >= 3 && splitParams[0].equals("richest"))
+        if (normalizedParams.startsWith("richest_"))
         {
-            String type = String.join("_", Arrays.copyOfRange(splitParams, 2, splitParams.length));
-            return resolveTopPlaceholder("coins", splitParams[1], type);
+            Optional<TopPlaceholderInput> parsedTop = parseTopPlaceholderInput(normalizedParams.substring("richest_".length()), false);
+
+            if (parsedTop.isEmpty())
+            {
+                return "N/A";
+            }
+
+            TopPlaceholderInput placeholderInput = parsedTop.get();
+            return resolveTopPlaceholder("coins", placeholderInput.position(), placeholderInput.type());
         }
 
         // %orbiseconomy_accepting_payments%
@@ -110,6 +124,56 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         return null;
+    }
+
+    private Optional<TopPlaceholderInput> parseTopPlaceholderInput(String input, boolean includeCurrency)
+    {
+        if (input == null || input.isBlank())
+        {
+            return Optional.empty();
+        }
+
+        String matchedType = null;
+
+        for (String supportedType : List.of("balance_formatted", "entry_legacy", "formatted", "balance", "entry", "name", "uuid"))
+        {
+            String typeSuffix = "_" + supportedType;
+
+            if (input.endsWith(typeSuffix))
+            {
+                matchedType = supportedType;
+                input = input.substring(0, input.length() - typeSuffix.length());
+                break;
+            }
+        }
+
+        if (matchedType == null)
+        {
+            return Optional.empty();
+        }
+
+        int lastSeparatorIndex = input.lastIndexOf('_');
+
+        if (lastSeparatorIndex <= 0)
+        {
+            return Optional.empty();
+        }
+
+        String position = input.substring(lastSeparatorIndex + 1);
+
+        if (includeCurrency)
+        {
+            String currencyId = input.substring(0, lastSeparatorIndex);
+
+            if (currencyId.isBlank())
+            {
+                return Optional.empty();
+            }
+
+            return Optional.of(new TopPlaceholderInput(currencyId, position, matchedType));
+        }
+
+        return Optional.of(new TopPlaceholderInput("coins", position, matchedType));
     }
 
     private String resolvePlayerBalance(OfflinePlayer player, String currencyId, boolean formatted)
@@ -243,6 +307,10 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         return instance.getConfig().getString("settings.placeholders.balancetop-position-" + normalizedType + "-none", "N/A");
+    }
+
+    private record TopPlaceholderInput(String currencyId, String position, String type)
+    {
     }
 
 }
