@@ -300,7 +300,25 @@ public class OrbisEconomy extends JavaPlugin
                 {
                     PlayerAccount account = gson.fromJson(reader, PlayerAccount.class);
                     account.migrateFromLegacy();
+
+                    // Add default balances for any currencies that are configured but missing from this account
+                    // (e.g. when a new currency is added to config.yml after the account was first created)
+                    boolean modified = false;
+                    for (Map.Entry<String, Currency> entry : currencies.entrySet())
+                    {
+                        if (!account.getBalances().containsKey(entry.getKey()))
+                        {
+                            account.setBalance(entry.getKey(), entry.getValue().getDefaultBalance());
+                            modified = true;
+                        }
+                    }
+
                     playerAccounts.put(uuid, account);
+
+                    if (modified)
+                    {
+                        dirtyPlayerAccountSnapshots.put(uuid, account.snapshot());
+                    }
                 }
             }
             catch (IllegalArgumentException exception)
