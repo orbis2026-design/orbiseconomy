@@ -328,43 +328,30 @@ public class PlaceholderAPI extends PlaceholderExpansion
             normalizedType = "balance_formatted";
         }
 
-        if (normalizedType.equals("name"))
+        return switch (normalizedType)
         {
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
-            String name = offlinePlayer.getName();
-            return name == null ? "N/A" : name;
-        }
-
-        if (normalizedType.equals("uuid"))
-        {
-            return entry.getKey().toString();
-        }
-
-        if (normalizedType.equals("balance"))
-        {
-            return entry.getValue().toPlainString();
-        }
-
-        if (normalizedType.equals("balance_formatted"))
-        {
-            return currency.formatAmount(entry.getValue());
-        }
-
-        if (normalizedType.equals("entry") || normalizedType.equals("entry_legacy"))
-        {
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
-            String name = offlinePlayer.getName() == null ? "N/A" : offlinePlayer.getName();
-            String formattedBalance = currency.formatAmount(entry.getValue());
-
-            if (normalizedType.equals("entry_legacy"))
-            {
-                return "§6" + name + "§8: §6" + formattedBalance;
+            case "name" -> {
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+                String name = offlinePlayer.getName();
+                yield name == null ? "N/A" : name;
             }
+            case "uuid" -> entry.getKey().toString();
+            case "balance" -> entry.getValue().toPlainString();
+            case "balance_formatted" -> currency.formatAmount(entry.getValue());
+            case "entry", "entry_legacy" -> {
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+                String name = offlinePlayer.getName() == null ? "N/A" : offlinePlayer.getName();
+                String formattedBalance = currency.formatAmount(entry.getValue());
 
-            return "<gold>" + name + "</gold><dark_gray>: </dark_gray><gold>" + formattedBalance + "</gold>";
-        }
+                if (normalizedType.equals("entry_legacy"))
+                {
+                    yield "§6" + name + "§8: §6" + formattedBalance;
+                }
 
-        return getTopPlaceholderNoneValue(type);
+                yield "<gold>" + name + "</gold><dark_gray>: </dark_gray><gold>" + formattedBalance + "</gold>";
+            }
+            default -> getTopPlaceholderNoneValue(type);
+        };
     }
 
     private String getTopPlaceholderNoneValue(String type)

@@ -15,6 +15,10 @@ tasks {
         dependsOn(shadowJar)
     }
 
+    check {
+        dependsOn("placeholderControlFlowGuard")
+    }
+
     shadowJar {
         // Make it so that a separate jar with "-all" at the end doesn't generate (https://imperceptiblethoughts.com/shadow/configuration/#configuring-output-name)
         archiveClassifier.set("")
@@ -31,6 +35,43 @@ repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
     maven("https://repo.nightexpressdev.com/releases")
+}
+
+
+
+val placeholderControlFlowGuard by tasks.registering {
+    group = "verification"
+    description = "Guards PlaceholderAPI top placeholder control flow from duplicated uuid returns/unreachable branches."
+
+    doLast {
+        val sourceFile = file("src/main/java/me/Short/OrbisEconomy/PlaceholderAPI.java")
+
+        if (!sourceFile.exists()) {
+            throw GradleException("Missing source file for placeholder guard: ${sourceFile.path}")
+        }
+
+        val source = sourceFile.readText()
+
+        val hasSwitchBasedTopResolver = Regex(
+            """private\s+String\s+resolveTopPlaceholder\([^)]*\)\s*\{[\s\S]*?return\s+switch\s*\(normalizedType\)"""
+        ).containsMatchIn(source)
+
+        if (!hasSwitchBasedTopResolver) {
+            throw GradleException(
+                "resolveTopPlaceholder must use a switch-based terminal return to keep control flow explicit."
+            )
+        }
+
+        val hasDuplicateUuidReturn = Regex(
+            """case\s+\"uuid\"\s*->\s*[^;]+;\s*return\s+[^;]+;"""
+        ).containsMatchIn(source)
+
+        if (hasDuplicateUuidReturn) {
+            throw GradleException(
+                "Detected duplicated return after uuid branch in resolveTopPlaceholder."
+            )
+        }
+    }
 }
 
 dependencies {
