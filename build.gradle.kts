@@ -11,8 +11,13 @@ group = "me.Short.OrbisEconomy"
 version = "2.0.0"
 
 tasks {
+    check {
+        dependsOn("checkLegacySchedulers")
+    }
+
     build {
         dependsOn(shadowJar)
+        dependsOn("checkLegacySchedulers")
     }
 
     shadowJar {
@@ -41,4 +46,42 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.7")
     compileOnly("com.gitlab.ruany:LiteBansAPI:0.6.1")
     compileOnly("su.nightexpress.economybridge:economy-bridge:1.2.1")
+}
+
+val legacySchedulerPatterns = listOf(
+    "Bukkit.getScheduler(",
+    ".runTask(",
+    ".runTaskAsynchronously(",
+    ".runTaskLater(",
+    ".runTaskLaterAsynchronously(",
+    ".runTaskTimer(",
+    ".runTaskTimerAsynchronously("
+)
+
+tasks.register("checkLegacySchedulers") {
+    group = "verification"
+    description = "Fails the build when legacy Bukkit scheduler APIs are used."
+
+    doLast {
+        val sourceRoots = listOf(file("src/main/java"), file("src/test/java"))
+        val violations = mutableListOf<String>()
+
+        sourceRoots.filter { it.exists() }.forEach { root ->
+            root.walkTopDown()
+                .filter { it.isFile && it.extension == "java" }
+                .forEach { sourceFile ->
+                    val content = sourceFile.readText()
+
+                    legacySchedulerPatterns.forEach { pattern ->
+                        if (content.contains(pattern)) {
+                            violations += "${sourceFile.relativeTo(projectDir)} -> ${pattern}"
+                        }
+                    }
+                }
+        }
+
+        if (violations.isNotEmpty()) {
+            throw GradleException("Legacy Bukkit scheduler API usage detected:\n" + violations.joinToString("\n"))
+        }
+    }
 }

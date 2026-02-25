@@ -93,15 +93,14 @@ public class PlaceholderAPI extends PlaceholderExpansion
                 return getTopFallback(null);
             }
 
-            String[] topSections = topPayload.split("_", 3);
+            TopPlaceholderRequest topRequest = parseTopPlaceholderRequest(topPayload);
 
-            if (topSections.length < 3 || topSections[0].isBlank() || topSections[1].isBlank() || topSections[2].isBlank())
+            if (topRequest == null)
             {
-                String fallbackType = topSections.length == 3 ? topSections[2] : null;
-                return getTopFallback(fallbackType);
+                return getTopFallback(null);
             }
 
-            return resolveTopPlaceholder(topSections[0], topSections[1], topSections[2]);
+            return resolveTopPlaceholder(topRequest.currencyId(), topRequest.position(), topRequest.type());
         }
 
         String[] splitParams = normalizedParams.split("_");
@@ -225,20 +224,52 @@ public class PlaceholderAPI extends PlaceholderExpansion
         return getTopFallback(type);
     }
 
+    private TopPlaceholderRequest parseTopPlaceholderRequest(String topPayload)
+    {
+        int firstSeparator = topPayload.indexOf('_');
+
+        if (firstSeparator <= 0)
+        {
+            return null;
+        }
+
+        int secondSeparator = topPayload.indexOf('_', firstSeparator + 1);
+
+        if (secondSeparator <= firstSeparator + 1 || secondSeparator == topPayload.length() - 1)
+        {
+            return null;
+        }
+
+        String currencyId = topPayload.substring(0, firstSeparator);
+        String position = topPayload.substring(firstSeparator + 1, secondSeparator);
+        String type = topPayload.substring(secondSeparator + 1);
+
+        if (currencyId.isBlank() || position.isBlank() || type.isBlank())
+        {
+            return null;
+        }
+
+        return new TopPlaceholderRequest(currencyId, position, type);
+    }
+
+    private record TopPlaceholderRequest(String currencyId, String position, String type)
+    {
+    }
+
     private String getBalanceFallback()
     {
-        return instance.getConfig().getString("placeholders.balance-none", "0");
+        return instance.getConfig().getString("settings.placeholders.balance-none", "0");
     }
 
     private String getTopFallback(String type)
     {
         if (type != null && !type.isBlank())
         {
-            return instance.getConfig().getString("placeholders.balancetop-position-" + type + "-none",
-                    instance.getConfig().getString("placeholders.top-invalid", "N/A"));
+            return instance.getConfig().getString("settings.placeholders.balancetop-position-" + type + "-none",
+                    instance.getConfig().getString("settings.placeholders.top-invalid", "N/A"));
         }
 
-        return instance.getConfig().getString("placeholders.top-invalid", "N/A");
+        return instance.getConfig().getString("settings.placeholders.top-invalid", "N/A");
     }
 
 }
