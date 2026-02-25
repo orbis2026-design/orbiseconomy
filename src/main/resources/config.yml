@@ -21,7 +21,7 @@ settings:
       # Default: "Coins"
       name-plural: "Coins"
 
-      # The balance a new player will start with, and what "/economy reset <player> coins" will set the target player's balance to
+      # The balance a new player will start with, and what "/economy reset [currency] <player> coins" will set the target player's balance to
       #      - OrbisEconomy does not support negative balances
       # Default: 0.00
       default-balance: 0.00
@@ -252,7 +252,7 @@ settings:
       #       - <uuid> will be replaced with the player's UUID
       message: "Failed to create account for <player> (<uuid>). This is because either the default balance is negative, uses more decimal places than what the currency is configured to use, or exceeds the configured maximum balance."
 
-    # When "/economy set <player> <amount>" is used to set a player's balance
+    # When "/economy set [currency] <player> <amount>" is used to set a player's balance
     balance-set:
 
       # Whether to log this
@@ -265,7 +265,7 @@ settings:
       #       - <amount> will be replaced with the amount set
       message: "Set <player>'s (<uuid>) balance to <amount>."
 
-    # When "/economy reset <player>" is used to reset a player's balance to default
+    # When "/economy reset [currency] <player>" is used to reset a player's balance to default
     balance-reset:
 
       # Whether to log this
@@ -406,10 +406,10 @@ messages:
     # When no or an incorrect sub-command is used
     help: |-
       <gray>----------(<green>Economy Management</green>)----------</gray>
-      <gray>-</gray> <click:suggest_command:/economy set ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy set <player> <amount></gold></hover></click> <gray>-</gray> <dark_aqua>Set the specified player's balance to the specified amount</dark_aqua>
-      <gray>-</gray> <click:suggest_command:/economy give ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy give <player> <amount></gold></hover></click> <gray>-</gray> <dark_aqua>Add the specified amount of money to the specified player's balance</dark_aqua>
-      <gray>-</gray> <click:suggest_command:/economy take ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy take <player> <amount></gold></hover></click> <gray>-</gray> <dark_aqua>Take the specified amount of money from the specified player's balance</dark_aqua>
-      <gray>-</gray> <click:suggest_command:/economy reset ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy reset <player></gold></hover></click> <gray>-</gray> <dark_aqua>Reset the specified player's balance to default</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/economy set ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy set [currency] <player> <amount></gold></hover></click> <gray>-</gray> <dark_aqua>Set the specified player's balance to the specified amount</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/economy give ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy give [currency] <player> <amount></gold></hover></click> <gray>-</gray> <dark_aqua>Add the specified amount of money to the specified player's balance</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/economy take ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy take [currency] <player> <amount></gold></hover></click> <gray>-</gray> <dark_aqua>Take the specified amount of money from the specified player's balance</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/economy reset ><hover:show_text:'<aqua>Click</aqua>'><gold>/economy reset [currency] <player></gold></hover></click> <gray>-</gray> <dark_aqua>Reset the specified player's balance to default</dark_aqua>
       <gray>-</gray> <click:suggest_command:/economy reload><hover:show_text:'<aqua>Click</aqua>'><gold>/economy reload</gold></hover></click> <gray>-</gray> <dark_aqua>Reload the plugin</dark_aqua>
 
   # Messages related to the "/balance" command
@@ -525,10 +525,10 @@ messages:
     # When no or an incorrect sub-command is used
     help: |-
       <gray>----------(<light_purple>Orbs Management</light_purple>)----------</gray>
-      <gray>-</gray> <click:suggest_command:/orbs balance><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs balance [player]</light_purple></hover></click> <gray>-</gray> <dark_aqua>Check your own or another player's Orbs balance</dark_aqua>
-      <gray>-</gray> <click:suggest_command:/orbs give ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs give <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Add the specified amount of Orbs to the specified player's balance</dark_aqua>
-      <gray>-</gray> <click:suggest_command:/orbs take ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs take <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Take the specified amount of Orbs from the specified player's balance</dark_aqua>
-      <gray>-</gray> <click:suggest_command:/orbs set ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs set <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Set the specified player's Orbs balance to the specified amount</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/orbs balance><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs balance [player]</light_purple></hover></click> <gray>-</gray> <dark_aqua>Check your own or another player's Orbs balance (wrapper for currency-aware /balance)</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/orbs give ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs give <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Add the specified amount of Orbs to the specified player's balance (wrapper for /economy give orbs)</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/orbs take ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs take <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Take the specified amount of Orbs from the specified player's balance (wrapper for /economy take orbs)</dark_aqua>
+      <gray>-</gray> <click:suggest_command:/orbs set ><hover:show_text:'<aqua>Click</aqua>'><light_purple>/orbs set <player> <amount></light_purple></hover></click> <gray>-</gray> <dark_aqua>Set the specified player's Orbs balance to the specified amount (wrapper for /economy set orbs)</dark_aqua>
 
   # Error messages
   error:
