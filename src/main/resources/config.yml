@@ -185,6 +185,13 @@ settings:
   # Settings related to PlaceholderAPI placeholders
   placeholders:
 
+    # What %orbiseconomy_balance_<currencyId>% and %orbiseconomy_balance_formatted_<currencyId>%
+    # placeholders will be replaced with when data is unavailable or invalid
+    balance-none: "0"
+
+    # Fallback value for malformed/invalid top placeholders
+    top-invalid: "N/A"
+
     # What the %orbiseconomy_richest_<position>_name% placeholder will be replaced with if there is no player in the specified position on "/balancetop"
     balancetop-position-name-none: "N/A"
 

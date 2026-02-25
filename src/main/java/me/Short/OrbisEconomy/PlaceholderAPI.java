@@ -56,25 +56,55 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         String normalizedParams = params.toLowerCase();
-        String[] splitParams = normalizedParams.split("_");
-
-        // %orbiseconomy_balance_<currencyId>%
-        if (splitParams.length == 2 && splitParams[0].equals("balance"))
-        {
-            return resolvePlayerBalance(player, splitParams[1], false);
-        }
 
         // %orbiseconomy_balance_formatted_<currencyId>%
-        if (splitParams.length == 3 && splitParams[0].equals("balance") && splitParams[1].equals("formatted"))
+        if (normalizedParams.startsWith("balance_formatted_"))
         {
-            return resolvePlayerBalance(player, splitParams[2], true);
+            String currencyId = normalizedParams.substring("balance_formatted_".length());
+
+            if (currencyId.isBlank())
+            {
+                return getBalanceFallback();
+            }
+
+            return resolvePlayerBalance(player, currencyId, true);
         }
 
-        // %orbiseconomy_top_<currencyId>_<position>_<type>%
-        if (splitParams.length == 4 && splitParams[0].equals("top"))
+        // %orbiseconomy_balance_<currencyId>%
+        if (normalizedParams.startsWith("balance_"))
         {
-            return resolveTopPlaceholder(splitParams[1], splitParams[2], splitParams[3]);
+            String currencyId = normalizedParams.substring("balance_".length());
+
+            if (currencyId.isBlank())
+            {
+                return getBalanceFallback();
+            }
+
+            return resolvePlayerBalance(player, currencyId, false);
         }
+
+        // %orbiseconomy_top_<currencyId>_<position>_<type...>%
+        if (normalizedParams.startsWith("top_"))
+        {
+            String topPayload = normalizedParams.substring("top_".length());
+
+            if (topPayload.isBlank())
+            {
+                return getTopFallback(null);
+            }
+
+            String[] topSections = topPayload.split("_", 3);
+
+            if (topSections.length < 3 || topSections[0].isBlank() || topSections[1].isBlank() || topSections[2].isBlank())
+            {
+                String fallbackType = topSections.length == 3 ? topSections[2] : null;
+                return getTopFallback(fallbackType);
+            }
+
+            return resolveTopPlaceholder(topSections[0], topSections[1], topSections[2]);
+        }
+
+        String[] splitParams = normalizedParams.split("_");
 
         // Keep backward compatibility for %orbiseconomy_richest_<position>_<type>% using default "coins" currency
         if (splitParams.length == 3 && splitParams[0].equals("richest"))
@@ -113,7 +143,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
     {
         if (player == null || currencyId == null)
         {
-            return "0";
+            return getBalanceFallback();
         }
 
         String normalizedCurrencyId = currencyId.toLowerCase();
@@ -121,14 +151,14 @@ public class PlaceholderAPI extends PlaceholderExpansion
 
         if (currency == null)
         {
-            return "0";
+            return getBalanceFallback();
         }
 
         PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
 
         if (account == null)
         {
-            return "0";
+            return getBalanceFallback();
         }
 
         BigDecimal balance = account.getBalance(normalizedCurrencyId);
@@ -139,7 +169,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
     {
         if (currencyId == null || positionInput == null || type == null)
         {
-            return "N/A";
+            return getTopFallback(type);
         }
 
         String normalizedCurrencyId = currencyId.toLowerCase();
@@ -147,7 +177,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
 
         if (currency == null)
         {
-            return "N/A";
+            return getTopFallback(type);
         }
 
         int position;
@@ -158,19 +188,19 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
         catch (NumberFormatException ignored)
         {
-            return "N/A";
+            return getTopFallback(type);
         }
 
         if (position <= 0)
         {
-            return "N/A";
+            return getTopFallback(type);
         }
 
         List<Map.Entry<UUID, BigDecimal>> topBalances = instance.getBalanceTop().getTopBalances(normalizedCurrencyId);
 
         if (position > topBalances.size())
         {
-            return "N/A";
+            return getTopFallback(type);
         }
 
         Map.Entry<UUID, BigDecimal> entry = topBalances.get(position - 1);
@@ -179,7 +209,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
         {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
             String name = offlinePlayer.getName();
-            return name == null ? "N/A" : name;
+            return name == null ? getTopFallback(type) : name;
         }
 
         if (type.equals("balance"))
@@ -187,12 +217,28 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return entry.getValue().toPlainString();
         }
 
-        if (type.equals("formatted"))
+        if (type.equals("formatted") || type.equals("balance_formatted"))
         {
             return currency.formatAmount(entry.getValue());
         }
 
-        return "N/A";
+        return getTopFallback(type);
+    }
+
+    private String getBalanceFallback()
+    {
+        return instance.getConfig().getString("placeholders.balance-none", "0");
+    }
+
+    private String getTopFallback(String type)
+    {
+        if (type != null && !type.isBlank())
+        {
+            return instance.getConfig().getString("placeholders.balancetop-position-" + type + "-none",
+                    instance.getConfig().getString("placeholders.top-invalid", "N/A"));
+        }
+
+        return instance.getConfig().getString("placeholders.top-invalid", "N/A");
     }
 
 }
