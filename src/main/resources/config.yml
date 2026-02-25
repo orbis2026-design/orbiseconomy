@@ -109,6 +109,16 @@ settings:
       # Default: NONE
       rounding-mode: NONE
 
+
+  # Settings related to EconomyBridge integration
+  economybridge:
+
+    # Optional prefix for EconomyBridge currency IDs.
+    # Leave empty to use raw configured currency IDs (recommended), e.g. "orbs" and "coins".
+    # Example: "orbiseconomy_" would expose IDs like "orbiseconomy_orbs".
+    # Default: ""
+    id-prefix: ""
+
   # Settings related to the "/balancetop" command
   balancetop:
 
