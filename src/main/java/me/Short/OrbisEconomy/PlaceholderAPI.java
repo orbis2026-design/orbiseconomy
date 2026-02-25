@@ -35,7 +35,8 @@ public class PlaceholderAPI extends PlaceholderExpansion
     @Override
     public @NotNull String getAuthor()
     {
-        return instance.getPluginMeta().getAuthors().getFirst();
+        List<String> authors = instance.getPluginMeta().getAuthors();
+        return authors.isEmpty() ? instance.getPluginMeta().getName() : authors.getFirst();
     }
 
     @Override
