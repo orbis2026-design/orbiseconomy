@@ -133,7 +133,7 @@ public class BalanceTopCommand
 
                             return Command.SINGLE_SUCCESS;
                         })
-                ));
+                );
 
         return root.build();
     }
