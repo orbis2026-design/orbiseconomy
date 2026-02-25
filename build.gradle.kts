@@ -42,3 +42,49 @@ dependencies {
     compileOnly("com.gitlab.ruany:LiteBansAPI:0.6.1")
     compileOnly("su.nightexpress.economybridge:economy-bridge:1.2.1")
 }
+
+tasks.register("forbidLegacySchedulers") {
+    group = "verification"
+    description = "Fails the build if legacy Bukkit scheduler APIs are used."
+
+    doLast {
+        val forbiddenPatterns = listOf(
+            "Bukkit.getScheduler(",
+            ".runTask(",
+            ".runTaskAsynchronously(",
+            ".runTaskLater(",
+            ".runTaskLaterAsynchronously(",
+            ".runTaskTimer(",
+            ".runTaskTimerAsynchronously("
+        )
+
+        val sourceRoots = listOf("src/main/java", "src/test/java")
+        val violations = mutableListOf<String>()
+
+        sourceRoots
+            .map { file(it) }
+            .filter { it.exists() }
+            .forEach { root ->
+                fileTree(root).matching { include("**/*.java") }.files.forEach { sourceFile ->
+                    val lines = sourceFile.readLines()
+                    lines.forEachIndexed { index, line ->
+                        forbiddenPatterns
+                            .filter { pattern -> line.contains(pattern) }
+                            .forEach { pattern ->
+                                violations += "${sourceFile.relativeTo(projectDir)}:${index + 1} contains forbidden scheduler call '${pattern}'"
+                            }
+                    }
+                }
+            }
+
+        if (violations.isNotEmpty()) {
+            throw GradleException(
+                "Legacy scheduler API usage detected. Use OrbisSchedulers contexts instead.\n" + violations.joinToString("\n")
+            )
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn("forbidLegacySchedulers")
+}
