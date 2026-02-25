@@ -117,6 +117,9 @@ public class OrbisEconomy extends JavaPlugin
         // Load currency registry from config
         currencies = loadCurrencies();
 
+        // Log placeholder usage guidance, including available currency IDs
+        logPlaceholderStartupGuidance();
+
         // Set "dirtyPlayerAccountSnapshots"
         dirtyPlayerAccountSnapshots = new ConcurrentHashMap<>();
 
@@ -613,6 +616,29 @@ public class OrbisEconomy extends JavaPlugin
         }
 
         return result;
+    }
+
+    // Method to log startup guidance for PlaceholderAPI usage
+    private void logPlaceholderStartupGuidance()
+    {
+        List<String> currencyIds = new ArrayList<>(currencies.keySet());
+
+        if (currencyIds.isEmpty())
+        {
+            getLogger().warning("No currencies are configured. Placeholder examples will use <currencyId>.");
+            getLogger().info("Vault placeholders are default-currency compatible only (coins).");
+            getLogger().info("Use multi-currency placeholders: %orbiseconomy_balance_<currencyId>%, %orbiseconomy_balance_formatted_<currencyId>%, %orbiseconomy_top_<currencyId>_<position>_<type>%");
+            return;
+        }
+
+        String exampleCurrencyId = currencyIds.getFirst();
+
+        getLogger().info("Available currency IDs: " + String.join(", ", currencyIds));
+        getLogger().info("Vault placeholders are default-currency compatible only (coins).");
+        getLogger().info("Multi-currency placeholders:");
+        getLogger().info(" - %orbiseconomy_balance_" + exampleCurrencyId + "%");
+        getLogger().info(" - %orbiseconomy_balance_formatted_" + exampleCurrencyId + "%");
+        getLogger().info(" - %orbiseconomy_top_" + exampleCurrencyId + "_1_balance_formatted%");
     }
 
     // Method to create a new PlayerAccount with default balances for all configured currencies
