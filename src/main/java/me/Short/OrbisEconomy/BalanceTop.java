@@ -1,29 +1,37 @@
 package me.Short.OrbisEconomy;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class BalanceTop
 {
 
-    // Ordered map of players and their balances from richest to poorest
-    private final Map<UUID, BigDecimal> topBalances;
+    // Ordered map of currency ID -> list of players and balances from richest to poorest
+    private final Map<String, List<Map.Entry<UUID, BigDecimal>>> topBalancesByCurrency;
 
     // All players' balances added together
     private final BigDecimal combinedTotalBalance;
 
     // Constructor
-    public BalanceTop(Map<UUID, BigDecimal> topBalances, BigDecimal combinedTotalBalance)
+    public BalanceTop(Map<String, List<Map.Entry<UUID, BigDecimal>>> topBalancesByCurrency, BigDecimal combinedTotalBalance)
     {
-        this.topBalances = topBalances;
+        this.topBalancesByCurrency = topBalancesByCurrency;
         this.combinedTotalBalance = combinedTotalBalance;
     }
 
-    // Getter for "topBalances"
-    public Map<UUID, BigDecimal> getTopBalances()
+    // Getter for top balances list by currency ID
+    public List<Map.Entry<UUID, BigDecimal>> getTopBalances(String currencyId)
     {
-        return topBalances;
+        if (currencyId == null)
+        {
+            return Collections.emptyList();
+        }
+
+        List<Map.Entry<UUID, BigDecimal>> entries = topBalancesByCurrency.get(currencyId.toLowerCase());
+        return entries == null ? Collections.emptyList() : entries;
     }
 
     // Getter for "combinedTotalBalance"

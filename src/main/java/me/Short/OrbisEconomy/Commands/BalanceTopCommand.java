@@ -87,9 +87,9 @@ public class BalanceTopCommand
         Economy economy = instance.getEconomy();
 
         BalanceTop balanceTop = instance.getBalanceTop();
-        Map<UUID, BigDecimal> topBalances = balanceTop.getTopBalances();
+        List<Map.Entry<UUID, BigDecimal>> topBalances = balanceTop.getTopBalances("coins");
 
-        // If the top balances map is empty, tell the command sender, and return
+        // If the top balances list is empty, tell the command sender, and return
         if (topBalances.isEmpty())
         {
             sender.sendMessage(miniMessage.deserialize(config.getString("messages.error.no-balancetop-entries"),
@@ -120,7 +120,7 @@ public class BalanceTopCommand
         int startPoint = (pageNumber - 1) * pageLength;
 
         // Append entries to the output
-        List<Map.Entry<UUID, BigDecimal>> entries = new ArrayList<>(topBalances.entrySet());
+        List<Map.Entry<UUID, BigDecimal>> entries = new ArrayList<>(topBalances);
         for (int i = startPoint; i < startPoint + pageLength && i < entries.size(); i++)
         {
             Map.Entry<UUID, BigDecimal> entry = entries.get(i);
@@ -156,7 +156,7 @@ public class BalanceTopCommand
     // Method to calculate the number of pages for the top balances map
     private static int calculateBalanceTopPages(OrbisEconomy instance)
     {
-        return (int) Math.ceil((double) instance.getBalanceTop().getTopBalances().size() / (double) instance.getConfig().getInt("settings.balancetop.page-length"));
+        return (int) Math.ceil((double) instance.getBalanceTop().getTopBalances("coins").size() / (double) instance.getConfig().getInt("settings.balancetop.page-length"));
     }
 
 }
