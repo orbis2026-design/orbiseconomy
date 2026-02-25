@@ -63,19 +63,19 @@ permissions:
     default: op
 
   orbiseconomy.command.economy.set:
-    description: "Access to /economy set <player> <amount>."
+    description: "Access to /economy set [currency] <player> <amount>."
     default: op
 
   orbiseconomy.command.economy.give:
-    description: "Access to /economy give <player> <amount>."
+    description: "Access to /economy give [currency] <player> <amount>."
     default: op
 
   orbiseconomy.command.economy.take:
-    description: "Access to /economy take <player> <amount>."
+    description: "Access to /economy take [currency] <player> <amount>."
     default: op
 
   orbiseconomy.command.economy.reset:
-    description: "Access to /economy reset <player>."
+    description: "Access to /economy reset [currency] <player>."
     default: op
 
   orbiseconomy.command.economy.reload:
@@ -122,17 +122,17 @@ permissions:
     default: true
 
   orbiseconomy.command.orbs.balance.others:
-    description: "Access to /orbs balance [player]."
+    description: "Access to /orbs balance [player] (orbs currency wrapper)."
     default: true
 
   orbiseconomy.command.orbs.give:
-    description: "Access to /orbs give <player> <amount>."
+    description: "Access to /orbs give <player> <amount> (orbs currency wrapper)."
     default: op
 
   orbiseconomy.command.orbs.take:
-    description: "Access to /orbs take <player> <amount>."
+    description: "Access to /orbs take <player> <amount> (orbs currency wrapper)."
     default: op
 
   orbiseconomy.command.orbs.set:
-    description: "Access to /orbs set <player> <amount>."
+    description: "Access to /orbs set <player> <amount> (orbs currency wrapper)."
     default: op

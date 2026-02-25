@@ -6,385 +6,177 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
+import me.Short.OrbisEconomy.Currency;
 import me.Short.OrbisEconomy.CustomCommandArguments.CachedOfflinePlayerArgument;
 import me.Short.OrbisEconomy.OrbisEconomy;
 import me.Short.OrbisEconomy.PlayerAccount;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @NullMarked
 public class OrbsCommand
 {
+    private static final String ORBS_ID = "orbs";
 
     public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, OrbisEconomy instance)
     {
         return Commands.literal(commandName)
-
-                // Require permission
                 .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.orbs"))
-
                 .executes(ctx ->
                 {
-                    // Send the sender the help message
                     ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.orbs.help")));
-
                     return Command.SINGLE_SUCCESS;
                 })
-
                 .then(Commands.literal("balance")
-
-                        // Require permission
                         .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.orbs.balance"))
-
                         .executes(ctx ->
                         {
-                            executeBalanceLogic(instance, ctx, null);
-
+                            executeBalance(instance, ctx, null);
                             return Command.SINGLE_SUCCESS;
                         })
-
                         .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
-
-                                // Require permission
                                 .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.orbs.balance.others"))
-
                                 .executes(ctx ->
                                 {
-                                    executeBalanceLogic(instance, ctx, ctx.getArgument("target player", OfflinePlayer.class));
-
+                                    executeBalance(instance, ctx, ctx.getArgument("target player", OfflinePlayer.class));
                                     return Command.SINGLE_SUCCESS;
-                                })
-                        )
-                )
-
-                .then(Commands.literal("give")
-
-                        // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.orbs.give"))
-
-                        .executes(ctx ->
-                        {
-                            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
-                                    Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
-                                    Placeholder.component("argument_usage", Component.text("give <player name> <amount>"))));
-
-                            return Command.SINGLE_SUCCESS;
-                        })
-
-                        .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
-
-                                .executes(ctx ->
-                                {
-                                    ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
-                                            Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
-                                            Placeholder.component("argument_usage", Component.text("give <player name> <amount>"))));
-
-                                    return Command.SINGLE_SUCCESS;
-                                })
-
-                                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
-
-                                        .executes(ctx ->
-                                        {
-                                            executeGiveLogic(instance, ctx, ctx.getArgument("target player", OfflinePlayer.class), BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros());
-
-                                            return Command.SINGLE_SUCCESS;
-                                        })
-                                )
-                        )
-                )
-
-                .then(Commands.literal("take")
-
-                        // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.orbs.take"))
-
-                        .executes(ctx ->
-                        {
-                            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
-                                    Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
-                                    Placeholder.component("argument_usage", Component.text("take <player name> <amount>"))));
-
-                            return Command.SINGLE_SUCCESS;
-                        })
-
-                        .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
-
-                                .executes(ctx ->
-                                {
-                                    ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
-                                            Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
-                                            Placeholder.component("argument_usage", Component.text("take <player name> <amount>"))));
-
-                                    return Command.SINGLE_SUCCESS;
-                                })
-
-                                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
-
-                                        .executes(ctx ->
-                                        {
-                                            executeTakeLogic(instance, ctx, ctx.getArgument("target player", OfflinePlayer.class), BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros());
-
-                                            return Command.SINGLE_SUCCESS;
-                                        })
-                                )
-                        )
-                )
-
-                .then(Commands.literal("set")
-
-                        // Require permission
-                        .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.orbs.set"))
-
-                        .executes(ctx ->
-                        {
-                            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
-                                    Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
-                                    Placeholder.component("argument_usage", Component.text("set <player name> <amount>"))));
-
-                            return Command.SINGLE_SUCCESS;
-                        })
-
-                        .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
-
-                                .executes(ctx ->
-                                {
-                                    ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
-                                            Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
-                                            Placeholder.component("argument_usage", Component.text("set <player name> <amount>"))));
-
-                                    return Command.SINGLE_SUCCESS;
-                                })
-
-                                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
-
-                                        .executes(ctx ->
-                                        {
-                                            executeSetLogic(instance, ctx, ctx.getArgument("target player", OfflinePlayer.class), BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros());
-
-                                            return Command.SINGLE_SUCCESS;
-                                        })
-                                )
-                        )
-                ).build();
+                                })))
+                .then(buildMutation(instance, "give", "orbiseconomy.command.orbs.give",
+                        "messages.orbs.give.orbs-given-target", "messages.orbs.give.orbs-given-sender", false))
+                .then(buildMutation(instance, "take", "orbiseconomy.command.orbs.take",
+                        "messages.orbs.take.orbs-taken-target", "messages.orbs.take.orbs-taken-sender", false))
+                .then(buildMutation(instance, "set", "orbiseconomy.command.orbs.set",
+                        "messages.orbs.set.orbs-set-target", "messages.orbs.set.orbs-set-sender", true))
+                .build();
     }
 
-    // Method to execute the balance sub-command logic
-    private static void executeBalanceLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, @Nullable OfflinePlayer target)
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildMutation(
+            OrbisEconomy instance, String literal, String permission, String targetPath, String senderPath, boolean nonNegative)
     {
-        final CommandSender sender = ctx.getSource().getSender();
+        return Commands.literal(literal)
+                .requires(sender -> sender.getSender().hasPermission(permission))
+                .executes(ctx -> incorrectUsage(instance, ctx, literal + " <player name> <amount>"))
+                .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
+                        .executes(ctx -> incorrectUsage(instance, ctx, literal + " <player name> <amount>"))
+                        .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
+                                .executes(ctx ->
+                                {
+                                    executeMutation(instance, ctx.getSource().getSender(),
+                                            ctx.getArgument("target player", OfflinePlayer.class),
+                                            BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros(),
+                                            literal,
+                                            targetPath,
+                                            senderPath,
+                                            nonNegative);
+                                    return Command.SINGLE_SUCCESS;
+                                })));
+    }
 
+    private static int incorrectUsage(OrbisEconomy instance, CommandContext<CommandSourceStack> ctx, String usage)
+    {
+        ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
+                Placeholder.component("command", Component.text("/" + ctx.getInput().split("\\s+")[0])),
+                Placeholder.component("argument_usage", Component.text(usage))));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static void executeBalance(OrbisEconomy instance, CommandContext<CommandSourceStack> ctx, @Nullable OfflinePlayer target)
+    {
+        CommandSender sender = ctx.getSource().getSender();
         if (target == null)
         {
-            if (!(sender instanceof Player))
+            if (!(sender instanceof Player playerSender))
             {
                 sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.console-cannot-use")));
-
                 return;
             }
-
-            target = (Player) sender;
+            target = playerSender;
         }
 
-        // If the target player does not have an account, return
-        if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
+        Currency currency = CurrencyCommandService.resolveCurrency(instance, sender, ORBS_ID);
+        if (currency == null)
         {
-            sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString(target != sender ? "messages.error.no-account-other" : "messages.error.no-account"),
-                    Placeholder.component("target", Component.text(target.getName()))));
-
             return;
         }
 
-        BigDecimal orbsBalance = instance.getPlayerAccounts().get(target.getUniqueId()).getOrbsBalance();
-        String balanceFormatted = formatOrbs(instance, orbsBalance);
+        PlayerAccount account = CurrencyCommandService.requireAccount(instance, sender, target, target == sender);
+        if (account == null)
+        {
+            return;
+        }
 
-        sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString(target != sender ? "messages.orbs.their-balance" : "messages.orbs.your-balance"),
+        String formattedBalance = currency.formatAmount(account.getBalance(currency.getId()));
+        sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString(target == sender ? "messages.orbs.your-balance" : "messages.orbs.their-balance"),
                 Placeholder.component("target", Component.text(target.getName())),
-                Placeholder.component("balance", Component.text(balanceFormatted))));
+                Placeholder.component("balance", Component.text(formattedBalance))));
     }
 
-    // Method to execute the give sub-command logic
-    private static void executeGiveLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
+    private static void executeMutation(OrbisEconomy instance,
+                                        CommandSender sender,
+                                        OfflinePlayer target,
+                                        BigDecimal amount,
+                                        String mode,
+                                        String targetPath,
+                                        String senderPath,
+                                        boolean nonNegative)
     {
-        // If the target player does not have an account, return
-        if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
+        Currency currency = CurrencyCommandService.resolveCurrency(instance, sender, ORBS_ID);
+        if (currency == null)
         {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
-                    Placeholder.component("target", Component.text(target.getName()))));
-
             return;
         }
 
-        // Amount must be greater than zero
-        if (amount.compareTo(BigDecimal.ZERO) <= 0)
+        PlayerAccount account = CurrencyCommandService.requireAccount(instance, sender, target, false);
+        if (account == null || !CurrencyCommandService.validateDecimalPlaces(instance, sender, amount, currency))
         {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
-
             return;
         }
 
-        UUID uuid = target.getUniqueId();
-        PlayerAccount account = instance.getPlayerAccounts().get(uuid);
-
-        BigDecimal newBalance = account.getOrbsBalance().add(amount);
-
-        // Check max balance
-        BigDecimal maxBalance = new BigDecimal(instance.getConfig().getString("settings.currencies.orbs.max-balance"));
-        if (newBalance.compareTo(maxBalance) > 0)
+        boolean validAmount = nonNegative
+                ? CurrencyCommandService.validateNonNegative(instance, sender, amount)
+                : CurrencyCommandService.validatePositive(instance, sender, amount);
+        if (!validAmount)
         {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.would-exceed-max-balance"),
-                    Placeholder.component("target", Component.text(target.getName()))));
-
             return;
         }
 
-        account.setOrbsBalance(newBalance);
-        instance.getDirtyPlayerAccountSnapshots().put(uuid, account.snapshot());
-
-        FileConfiguration config = instance.getConfig();
-        MiniMessage miniMessage = instance.getMiniMessage();
-        String amountFormatted = formatOrbs(instance, amount);
-
-        // Send message to the target player, if online
-        if (target instanceof Player)
+        BigDecimal current = account.getBalance(currency.getId());
+        BigDecimal newBalance;
+        if (mode.equals("give"))
         {
-            ((Player) target).sendMessage(miniMessage.deserialize(config.getString("messages.orbs.give.orbs-given-target"),
-                    Placeholder.component("amount", Component.text(amountFormatted))));
+            newBalance = current.add(amount);
+        }
+        else if (mode.equals("take"))
+        {
+            if (current.compareTo(amount) < 0)
+            {
+                sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.insufficient-funds-other"),
+                        Placeholder.component("target", Component.text(target.getName())),
+                        Placeholder.component("amount", Component.text(currency.formatAmount(amount)))));
+                return;
+            }
+            newBalance = current.subtract(amount);
+        }
+        else
+        {
+            newBalance = amount;
         }
 
-        ctx.getSource().getSender().sendMessage(miniMessage.deserialize(config.getString("messages.orbs.give.orbs-given-sender"),
-                Placeholder.component("target", Component.text(target.getName())),
-                Placeholder.component("amount", Component.text(amountFormatted))));
+        if (!CurrencyCommandService.validateMaxBalance(instance, sender, target, currency, newBalance))
+        {
+            return;
+        }
+
+        account.setBalance(currency.getId(), newBalance);
+        CurrencyCommandService.markDirty(instance, target.getUniqueId(), account);
+
+        CurrencyCommandService.sendMutationMessages(instance, sender, target, targetPath, senderPath, "amount", currency.formatAmount(amount));
     }
-
-    // Method to execute the take sub-command logic
-    private static void executeTakeLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
-    {
-        // If the target player does not have an account, return
-        if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
-        {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
-                    Placeholder.component("target", Component.text(target.getName()))));
-
-            return;
-        }
-
-        // Amount must be greater than zero
-        if (amount.compareTo(BigDecimal.ZERO) <= 0)
-        {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
-
-            return;
-        }
-
-        UUID uuid = target.getUniqueId();
-        PlayerAccount account = instance.getPlayerAccounts().get(uuid);
-
-        BigDecimal currentOrbsBalance = account.getOrbsBalance();
-
-        // Check sufficient funds
-        if (currentOrbsBalance.compareTo(amount) < 0)
-        {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.insufficient-funds-other"),
-                    Placeholder.component("target", Component.text(target.getName())),
-                    Placeholder.component("amount", Component.text(formatOrbs(instance, amount)))));
-
-            return;
-        }
-
-        account.setOrbsBalance(currentOrbsBalance.subtract(amount));
-        instance.getDirtyPlayerAccountSnapshots().put(uuid, account.snapshot());
-
-        FileConfiguration config = instance.getConfig();
-        MiniMessage miniMessage = instance.getMiniMessage();
-        String amountFormatted = formatOrbs(instance, amount);
-
-        // Send message to the target player, if online
-        if (target.isOnline())
-        {
-            target.getPlayer().sendMessage(miniMessage.deserialize(config.getString("messages.orbs.take.orbs-taken-target"),
-                    Placeholder.component("amount", Component.text(amountFormatted))));
-        }
-
-        ctx.getSource().getSender().sendMessage(miniMessage.deserialize(config.getString("messages.orbs.take.orbs-taken-sender"),
-                Placeholder.component("target", Component.text(target.getName())),
-                Placeholder.component("amount", Component.text(amountFormatted))));
-    }
-
-    // Method to execute the set sub-command logic
-    private static void executeSetLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount)
-    {
-        // If the target player does not have an account, return
-        if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
-        {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
-                    Placeholder.component("target", Component.text(target.getName()))));
-
-            return;
-        }
-
-        // Amount must be non-negative
-        if (amount.compareTo(BigDecimal.ZERO) < 0)
-        {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.negative-amount")));
-
-            return;
-        }
-
-        // Check max balance
-        BigDecimal maxBalance = new BigDecimal(instance.getConfig().getString("settings.currencies.orbs.max-balance"));
-        if (amount.compareTo(maxBalance) > 0)
-        {
-            ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.would-exceed-max-balance"),
-                    Placeholder.component("target", Component.text(target.getName()))));
-
-            return;
-        }
-
-        UUID uuid = target.getUniqueId();
-        PlayerAccount account = instance.getPlayerAccounts().get(uuid);
-
-        account.setOrbsBalance(amount);
-        instance.getDirtyPlayerAccountSnapshots().put(uuid, account.snapshot());
-
-        FileConfiguration config = instance.getConfig();
-        MiniMessage miniMessage = instance.getMiniMessage();
-        String amountFormatted = formatOrbs(instance, amount);
-
-        // Send message to the target player, if online
-        if (target instanceof Player)
-        {
-            ((Player) target).sendMessage(miniMessage.deserialize(config.getString("messages.orbs.set.orbs-set-target"),
-                    Placeholder.component("amount", Component.text(amountFormatted))));
-        }
-
-        ctx.getSource().getSender().sendMessage(miniMessage.deserialize(config.getString("messages.orbs.set.orbs-set-sender"),
-                Placeholder.component("target", Component.text(target.getName())),
-                Placeholder.component("amount", Component.text(amountFormatted))));
-    }
-
-    // Helper method to format an Orbs amount using the configured format
-    private static String formatOrbs(OrbisEconomy instance, BigDecimal amount)
-    {
-        String nameSingular = instance.getConfig().getString("settings.currencies.orbs.name-singular");
-        String namePlural = instance.getConfig().getString("settings.currencies.orbs.name-plural");
-        String format = instance.getConfig().getString("settings.currencies.orbs.format");
-
-        String name = amount.compareTo(BigDecimal.ONE) == 0 ? nameSingular : namePlural;
-
-        return format
-                .replace("<amount>", amount.stripTrailingZeros().toPlainString())
-                .replace("<name>", name);
-    }
-
 }

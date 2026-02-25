@@ -35,10 +35,7 @@ public class PayCommand
     public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, OrbisEconomy instance)
     {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(commandName)
-
-                // Require permission
                 .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.pay"))
-
                 .executes(ctx ->
                 {
                     ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
@@ -47,12 +44,10 @@ public class PayCommand
                     return Command.SINGLE_SUCCESS;
                 });
 
-        // Dynamic currency literal nodes: /pay <currencyId> <player> <amount>
         for (String currencyId : instance.getCurrencies().keySet())
         {
             final String fid = currencyId;
             root.then(Commands.literal(currencyId)
-
                     .executes(ctx ->
                     {
                         ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
@@ -60,9 +55,7 @@ public class PayCommand
                                 Placeholder.component("argument_usage", Component.text(fid + " <player name> <amount>"))));
                         return Command.SINGLE_SUCCESS;
                     })
-
                     .then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
-
                             .suggests((ctx, builder) -> CompletableFuture.supplyAsync(() ->
                             {
                                 if (ctx.getSource().getSender() instanceof Player senderPlayer)
@@ -79,7 +72,6 @@ public class PayCommand
                                 }
                                 return builder.build();
                             }))
-
                             .executes(ctx ->
                             {
                                 ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
@@ -87,9 +79,7 @@ public class PayCommand
                                         Placeholder.component("argument_usage", Component.text(fid + " <player name> <amount>"))));
                                 return Command.SINGLE_SUCCESS;
                             })
-
                             .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
-
                                     .executes(ctx ->
                                     {
                                         executeCommandLogic(instance, ctx,
@@ -97,15 +87,10 @@ public class PayCommand
                                                 BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros(),
                                                 fid);
                                         return Command.SINGLE_SUCCESS;
-                                    })
-                            )
-                    )
-            );
+                                    }))));
         }
 
-        // Default: /pay <player> <amount> -> coins
         root.then(Commands.argument("target player", new CachedOfflinePlayerArgument(instance))
-
                 .suggests((ctx, builder) -> CompletableFuture.supplyAsync(() ->
                 {
                     if (ctx.getSource().getSender() instanceof Player senderPlayer)
@@ -122,7 +107,6 @@ public class PayCommand
                     }
                     return builder.build();
                 }))
-
                 .executes(ctx ->
                 {
                     ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.incorrect-usage"),
@@ -130,9 +114,7 @@ public class PayCommand
                             Placeholder.component("argument_usage", Component.text("<player name> <amount>"))));
                     return Command.SINGLE_SUCCESS;
                 })
-
                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0D))
-
                         .executes(ctx ->
                         {
                             executeCommandLogic(instance, ctx,
@@ -140,26 +122,21 @@ public class PayCommand
                                     BigDecimal.valueOf(ctx.getArgument("amount", double.class)).stripTrailingZeros(),
                                     "coins");
                             return Command.SINGLE_SUCCESS;
-                        })
-                )
-        );
+                        })));
 
         return root.build();
     }
 
-    // Method to execute the command logic for any currency
     private static void executeCommandLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount, String currencyId)
     {
         final CommandSender sender = ctx.getSource().getSender();
 
-        // Only players can pay money
         if (!(sender instanceof Player senderPlayer))
         {
             sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.console-cannot-use")));
             return;
         }
 
-        // Players cannot pay themselves
         if (target.getUniqueId().equals(senderPlayer.getUniqueId()))
         {
             sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.cannot-pay-yourself")));
@@ -167,72 +144,48 @@ public class PayCommand
         }
 
         Map<UUID, PlayerAccount> playerAccounts = instance.getPlayerAccounts();
-
-        // Sender must have an account
-        if (!playerAccounts.containsKey(senderPlayer.getUniqueId()))
+        PlayerAccount senderAccount = CurrencyCommandService.requireAccount(instance, senderPlayer, senderPlayer, true);
+        PlayerAccount targetAccount = CurrencyCommandService.requireAccount(instance, senderPlayer, target, false);
+        if (senderAccount == null || targetAccount == null)
         {
-            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account")));
             return;
         }
 
-        // Target must have an account
-        if (!playerAccounts.containsKey(target.getUniqueId()))
-        {
-            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
-                    Placeholder.component("target", Component.text(target.getName()))));
-            return;
-        }
-
-        // Target must be accepting payments
-        if (!playerAccounts.get(target.getUniqueId()).getAcceptingPayments())
+        if (!targetAccount.getAcceptingPayments())
         {
             senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-accepting-payments"),
                     Placeholder.component("target", Component.text(target.getName()))));
             return;
         }
 
-        // Fire PlayerPayPlayerEvent
         PlayerPayPlayerEvent playerPayPlayerEvent = new PlayerPayPlayerEvent(senderPlayer, target, amount);
         Bukkit.getServer().getPluginManager().callEvent(playerPayPlayerEvent);
-
         if (playerPayPlayerEvent.isCancelled())
         {
             return;
         }
 
-        // Re-assign variables in case a plugin modified them via the event
         senderPlayer = playerPayPlayerEvent.getSender();
         target = playerPayPlayerEvent.getRecipient();
         amount = playerPayPlayerEvent.getAmount();
 
-        Currency currency = instance.getCurrencies().get(currencyId);
-
-        if (currency == null)
+        Currency currency = CurrencyCommandService.resolveCurrency(instance, senderPlayer, currencyId);
+        if (currency == null
+                || !CurrencyCommandService.validateDecimalPlaces(instance, senderPlayer, amount, currency)
+                || !CurrencyCommandService.validatePositive(instance, senderPlayer, amount))
         {
-            senderPlayer.sendMessage(instance.getMiniMessage().deserialize("<red>Unknown currency: " + currencyId + "</red>"));
             return;
         }
 
-        // Validate amount precision
-        if (amount.scale() > currency.getDecimalPlaces())
+        senderAccount = playerAccounts.get(senderPlayer.getUniqueId());
+        targetAccount = playerAccounts.get(target.getUniqueId());
+        if (senderAccount == null || targetAccount == null)
         {
-            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.too-many-decimal-places-amount"),
-                    Placeholder.component("amount", Component.text(amount.toPlainString())),
-                    Placeholder.component("decimal_places", Component.text(currency.getDecimalPlaces()))));
+            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account")));
             return;
         }
 
-        // Amount must be greater than zero
-        if (amount.compareTo(BigDecimal.ZERO) <= 0)
-        {
-            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.not-greater-than-zero-amount")));
-            return;
-        }
-
-        PlayerAccount senderAccount = playerAccounts.get(senderPlayer.getUniqueId());
-        BigDecimal senderBalance = senderAccount.getBalance(currencyId);
-
-        // Sender must have enough funds
+        BigDecimal senderBalance = senderAccount.getBalance(currency.getId());
         if (senderBalance.compareTo(amount) < 0)
         {
             senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.insufficient-funds"),
@@ -240,44 +193,33 @@ public class PayCommand
             return;
         }
 
-        PlayerAccount targetAccount = playerAccounts.get(target.getUniqueId());
-        BigDecimal targetBalance = targetAccount.getBalance(currencyId);
-        BigDecimal newTargetBalance = targetBalance.add(amount);
-
-        // Target balance must not exceed max
-        if (newTargetBalance.compareTo(currency.getMaxBalance()) > 0)
+        BigDecimal newTargetBalance = targetAccount.getBalance(currency.getId()).add(amount);
+        if (!CurrencyCommandService.validateMaxBalance(instance, senderPlayer, target, currency, newTargetBalance))
         {
-            senderPlayer.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.would-exceed-max-balance"),
-                    Placeholder.component("target", Component.text(target.getName()))));
             return;
         }
 
-        // Perform the transfer
-        senderAccount.setBalance(currencyId, senderBalance.subtract(amount));
-        targetAccount.setBalance(currencyId, newTargetBalance);
+        senderAccount.setBalance(currency.getId(), senderBalance.subtract(amount));
+        targetAccount.setBalance(currency.getId(), newTargetBalance);
 
-        // Mark both accounts for saving
         UUID senderUuid = senderPlayer.getUniqueId();
         UUID targetUuid = target.getUniqueId();
-        instance.getDirtyPlayerAccountSnapshots().put(senderUuid, senderAccount.snapshot());
-        instance.getDirtyPlayerAccountSnapshots().put(targetUuid, targetAccount.snapshot());
+        CurrencyCommandService.markDirty(instance, senderUuid, senderAccount);
+        CurrencyCommandService.markDirty(instance, targetUuid, targetAccount);
 
         FileConfiguration config = instance.getConfig();
         MiniMessage miniMessage = instance.getMiniMessage();
         String amountFormatted = currency.formatAmount(amount);
 
-        // Notify the target player if online
-        if (target instanceof Player)
+        if (target instanceof Player targetPlayer)
         {
-            ((Player) target).sendMessage(miniMessage.deserialize(config.getString("messages.pay.paid-target"),
+            targetPlayer.sendMessage(miniMessage.deserialize(config.getString("messages.pay.paid-target"),
                     Placeholder.component("player", Component.text(senderPlayer.getName())),
                     Placeholder.component("amount", Component.text(amountFormatted))));
         }
 
-        // Notify the sender
         senderPlayer.sendMessage(miniMessage.deserialize(config.getString("messages.pay.paid-sender"),
                 Placeholder.component("target", Component.text(target.getName())),
                 Placeholder.component("amount", Component.text(amountFormatted))));
     }
-
 }
