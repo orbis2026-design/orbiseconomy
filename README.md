@@ -2,6 +2,16 @@
 
 ## PlaceholderAPI placeholders
 
+> [!IMPORTANT]
+> Vault placeholder compatibility is **default-currency only**. Any Vault/Economy placeholders
+> exposed through other plugins read from the configured `coins` currency.
+>
+> For multi-currency usage, use OrbisEconomy's explicit currency-aware placeholders:
+>
+> - `%orbiseconomy_balance_<currencyId>%`
+> - `%orbiseconomy_balance_formatted_<currencyId>%`
+> - `%orbiseconomy_top_<currencyId>_<position>_<type>%`
+
 Top placeholders support both currency-aware and legacy richest formats:
 
 - `%orbiseconomy_top_<currencyId>_<position>_<type>%`
