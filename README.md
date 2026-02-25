@@ -46,3 +46,36 @@ For non-player contexts that still need a player's balance, use explicit target 
 - `%orbiseconomy_balance_formatted_for_uuid_<currencyId>_<uuid>%`
 - `%orbiseconomy_balance_for_name_<currencyId>_<name>%`
 - `%orbiseconomy_balance_formatted_for_name_<currencyId>_<name>%`
+
+
+## EconomyBridge currency IDs (NightCore / SunLight / ExcellentShop)
+
+OrbisEconomy registers one EconomyBridge currency per configured `settings.currencies` entry.
+
+- By default, IDs are the raw currency IDs from `config.yml` (for example: `coins`, `orbs`, `votepoints`).
+- `getInternalId()` and `getOriginalId()` now resolve to the same canonical ID.
+- Optional namespacing can be enabled with `settings.economybridge.id-prefix`.
+  - Example: `id-prefix: "orbiseconomy_"` makes `orbs` register as `orbiseconomy_orbs`.
+
+At startup, OrbisEconomy logs all registered EconomyBridge IDs so you can copy/paste exact values into dependent plugin configs.
+
+Example IDs in EconomyBridge-backed plugin configs:
+
+```yaml
+# Example: ExcellentShop / NightCore / SunLight style config snippets
+Price:
+  Currency: "orbs"
+  Amount: 25
+
+Reward:
+  Currency: "coins"
+  Amount: 100
+```
+
+If you set `settings.economybridge.id-prefix: "orbiseconomy_"`, use:
+
+```yaml
+Currency: "orbiseconomy_orbs"
+Currency: "orbiseconomy_coins"
+```
+

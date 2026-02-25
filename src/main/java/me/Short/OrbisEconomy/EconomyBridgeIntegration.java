@@ -8,6 +8,8 @@ import su.nightexpress.economybridge.EconomyBridge;
 import su.nightexpress.economybridge.api.Currency;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,16 +44,29 @@ public class EconomyBridgeIntegration
      */
     public void register()
     {
+        String idPrefix = instance.getConfig().getString("settings.economybridge.id-prefix", "");
+        if (idPrefix == null)
+        {
+            idPrefix = "";
+        }
+
+        List<String> registeredIds = new ArrayList<>();
         for (Map.Entry<String, me.Short.OrbisEconomy.Currency> entry : instance.getCurrencies().entrySet())
         {
             String currencyId = entry.getKey();
             me.Short.OrbisEconomy.Currency currency = entry.getValue();
 
-            EconomyBridge.registerCurrency(new OrbisEconomyBridgeProvider(instance, currency));
+            String canonicalId = idPrefix + currency.getId();
+
+            EconomyBridge.registerCurrency(new OrbisEconomyBridgeProvider(instance, currency, canonicalId));
+            registeredIds.add(canonicalId);
 
             instance.getLogger().info("[EconomyBridge] Registered provider for currency: " + currencyId
-                    + " (" + currency.getNamePlural() + ")");
+                    + " (" + currency.getNamePlural() + ") as id '" + canonicalId + "'");
         }
+
+        instance.getLogger().info("[EconomyBridge] Registered EconomyBridge IDs: " + String.join(", ", registeredIds));
+        instance.getLogger().info("[EconomyBridge] Use these exact IDs in NightCore/SunLight/ExcellentShop/EconomyBridge-backed plugin configs.");
     }
 
     /**
@@ -63,25 +78,27 @@ public class EconomyBridgeIntegration
 
         private final OrbisEconomy instance;
         private final me.Short.OrbisEconomy.Currency currency;
+        private final String canonicalId;
 
-        OrbisEconomyBridgeProvider(OrbisEconomy instance, me.Short.OrbisEconomy.Currency currency)
+        OrbisEconomyBridgeProvider(OrbisEconomy instance, me.Short.OrbisEconomy.Currency currency, String canonicalId)
         {
             this.instance = instance;
             this.currency = currency;
+            this.canonicalId = canonicalId;
         }
 
         @Override
         @NotNull
         public String getInternalId()
         {
-            return "orbiseconomy_" + currency.getId();
+            return canonicalId;
         }
 
         @Override
         @NotNull
         public String getOriginalId()
         {
-            return getInternalId();
+            return canonicalId;
         }
 
         @Override
