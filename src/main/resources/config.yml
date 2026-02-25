@@ -416,15 +416,17 @@ messages:
     # The header
     #      - <page> will be replaced with the current page
     #      - <pages> will be replaced with the total number of pages
-    #      - <total> will be replaced with the total balance of the server
+    #      - <currency> will be replaced with the selected currency name
+    #      - <total> will be replaced with the total balance of the server for the selected currency
     header: |-
-      <gray>----------(<green>Top Balances (Page: <gold><page></gold>/<gold><pages></gold>)</green>)----------</gray>
+      <gray>----------(<green>Top <gold><currency></gold> Balances (Page: <gold><page></gold>/<gold><pages></gold>)</green>)----------</gray>
       <aqua>Total:</aqua> <light_purple><total></light_purple>
 
     # What each entry will look like
     #      - <position> will be replaced with the player's leaderboard position
     #      - <player> will be replaced with the player's username
     #      - <dots> will be replaced with the number of dots required to align the content of the entry after the placeholder with that of other entries
+    #      - <currency> will be replaced with the selected currency name
     #      - <balance> will be replaced with the player's balance
     entry: "<dark_aqua><position>.</dark_aqua> <gold><player></gold> <dark_gray><dots></dark_gray> <gold><balance></gold>"
 
@@ -432,6 +434,7 @@ messages:
     #      - <position> will be replaced with the player's leaderboard position
     #      - <player> will be replaced with the player's username
     #      - <dots> will be replaced with the number of dots required to align the content of the entry after the placeholder with that of other entries
+    #      - <currency> will be replaced with the selected currency name
     #      - <balance> will be replaced with the player's balance
     entry-you: "<aqua><position>.</aqua> <yellow><player></yellow> <gray><dots></gray> <yellow><balance></yellow>"
 
@@ -538,6 +541,10 @@ messages:
     #      - <target> will be replaced with the target's username
     no-account-other: "<red><gold><target></gold> does not have an account.</red>"
 
+    # When an unknown currency ID is specified
+    #      - <currency> will be replaced with the specified currency ID
+    unknown-currency: "<red><gold><currency></gold> is not a valid currency.</red>"
+
     # When an invalid amount is specified (e.g. a word instead of a number)
     #      - <amount> will be replaced with the specified amount
     invalid-amount: "<red><gold><amount></gold> is not a valid amount.</red>"
@@ -550,9 +557,10 @@ messages:
     cannot-pay-yourself: "<red>You cannot pay yourself.</red>"
 
     # When the "/balancetop" command is used, but there are no entries
-    #      - <total> will be replaced with the total balance of the server
+    #      - <currency> will be replaced with the selected currency name
+    #      - <total> will be replaced with the total balance of the server for the selected currency
     no-balancetop-entries: |-
-      <aqua>Total:</aqua> <light_purple><total></light_purple>
+      <aqua>Total <gold><currency></gold>:</aqua> <light_purple><total></light_purple>
       <red>There are no balances to show.</red>
 
     # When a player-targetting command is run that would result in the target's balance exceeding the server's maximum balance
