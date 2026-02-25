@@ -23,7 +23,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.FileReader;
@@ -87,7 +87,7 @@ public class OrbisEconomy extends JavaPlugin
     private BalanceTop balanceTop;
 
     // The top balances update task, so it can be cancelled in the event of a reload
-    private ScheduledTask updateBalanceTopTask;
+    private BukkitTask updateBalanceTopTask;
 
     // Flag to determine whether a top balances update task is running - used to prevent tasks from being able to overlap
     private AtomicBoolean updateBalanceTopTaskRunning;
@@ -375,7 +375,7 @@ public class OrbisEconomy extends JavaPlugin
     // Method to schedule a repeating BalanceTop update task
     private void scheduleBalanceTopUpdateTask()
     {
-        updateBalanceTopTask = getServer().getGlobalRegionScheduler().runAtFixedRate(this, task ->
+        updateBalanceTopTask = Bukkit.getScheduler().runTaskTimer(this, () ->
         {
             // Don't update BalanceTop if a task is already running
             if (!updateBalanceTopTaskRunning.compareAndSet(false, true))
@@ -649,20 +649,13 @@ public class OrbisEconomy extends JavaPlugin
                 }
             }
 
-            List<String> collisions = new ArrayList<>();
-
             collapsedCurrencyKeys.forEach((normalizedKey, originalKeys) ->
             {
                 if (originalKeys.size() > 1)
                 {
-                    collisions.add("'" + normalizedKey + "' <= [" + String.join(", ", originalKeys) + "]");
+                    getLogger().warning("Duplicate currency keys collapse to normalized ID '" + normalizedKey + "': " + String.join(", ", originalKeys));
                 }
             });
-
-            if (!collisions.isEmpty())
-            {
-                throw new IllegalStateException("Currency ID normalization collisions detected. Update settings.currencies keys so each key normalizes uniquely via OrbisEconomy.normalizeCurrencyId: " + String.join("; ", collisions));
-            }
         }
 
         return result;

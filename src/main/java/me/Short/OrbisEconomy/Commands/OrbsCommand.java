@@ -205,8 +205,7 @@ public class OrbsCommand
             return;
         }
 
-        String currencyId = OrbisEconomy.normalizeCurrencyId("orbs");
-        BigDecimal orbsBalance = instance.getPlayerAccounts().get(target.getUniqueId()).getBalance(currencyId);
+        BigDecimal orbsBalance = instance.getPlayerAccounts().get(target.getUniqueId()).getOrbsBalance();
         String balanceFormatted = formatOrbs(instance, orbsBalance);
 
         sender.sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString(target != sender ? "messages.orbs.their-balance" : "messages.orbs.your-balance"),
@@ -237,8 +236,7 @@ public class OrbsCommand
         UUID uuid = target.getUniqueId();
         PlayerAccount account = instance.getPlayerAccounts().get(uuid);
 
-        String currencyId = OrbisEconomy.normalizeCurrencyId("orbs");
-        BigDecimal newBalance = account.getBalance(currencyId).add(amount);
+        BigDecimal newBalance = account.getOrbsBalance().add(amount);
 
         // Check max balance
         BigDecimal maxBalance = new BigDecimal(instance.getConfig().getString("settings.currencies.orbs.max-balance"));
@@ -250,7 +248,7 @@ public class OrbsCommand
             return;
         }
 
-        account.setBalance(currencyId, newBalance);
+        account.setOrbsBalance(newBalance);
         instance.getDirtyPlayerAccountSnapshots().put(uuid, account.snapshot());
 
         FileConfiguration config = instance.getConfig();
@@ -292,8 +290,7 @@ public class OrbsCommand
         UUID uuid = target.getUniqueId();
         PlayerAccount account = instance.getPlayerAccounts().get(uuid);
 
-        String currencyId = OrbisEconomy.normalizeCurrencyId("orbs");
-        BigDecimal currentOrbsBalance = account.getBalance(currencyId);
+        BigDecimal currentOrbsBalance = account.getOrbsBalance();
 
         // Check sufficient funds
         if (currentOrbsBalance.compareTo(amount) < 0)
@@ -305,7 +302,7 @@ public class OrbsCommand
             return;
         }
 
-        account.setBalance(currencyId, currentOrbsBalance.subtract(amount));
+        account.setOrbsBalance(currentOrbsBalance.subtract(amount));
         instance.getDirtyPlayerAccountSnapshots().put(uuid, account.snapshot());
 
         FileConfiguration config = instance.getConfig();
@@ -357,8 +354,7 @@ public class OrbsCommand
         UUID uuid = target.getUniqueId();
         PlayerAccount account = instance.getPlayerAccounts().get(uuid);
 
-        String currencyId = OrbisEconomy.normalizeCurrencyId("orbs");
-        account.setBalance(currencyId, amount);
+        account.setOrbsBalance(amount);
         instance.getDirtyPlayerAccountSnapshots().put(uuid, account.snapshot());
 
         FileConfiguration config = instance.getConfig();

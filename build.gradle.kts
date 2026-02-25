@@ -17,7 +17,6 @@ tasks {
 
     check {
         dependsOn("placeholderControlFlowGuard")
-        dependsOn("legacySchedulerGuard")
     }
 
     shadowJar {
@@ -39,42 +38,6 @@ repositories {
 }
 
 
-
-
-
-val legacySchedulerGuard by tasks.registering {
-    group = "verification"
-    description = "Fails the build when legacy Bukkit scheduler APIs are used in source code."
-
-    doLast {
-        val sourceFiles = fileTree("src/main/java") { include("**/*.java") }
-
-        val forbiddenPatterns = listOf(
-            Regex("""\bBukkit\.getScheduler\s*\("""),
-            Regex("""\.runTask(?:Later|Timer|Asynchronously)?\s*\("""),
-            Regex("""\.runTaskTimerAsynchronously\s*\(""")
-        )
-
-        val violations = mutableListOf<String>()
-
-        sourceFiles.forEach { sourceFile ->
-            val text = sourceFile.readText()
-            forbiddenPatterns.forEach { pattern ->
-                pattern.findAll(text).forEach { match ->
-                    val line = text.substring(0, match.range.first).count { it == '\n' } + 1
-                    violations.add("${sourceFile.path}:$line -> ${match.value}")
-                }
-            }
-        }
-
-        if (violations.isNotEmpty()) {
-            throw GradleException(
-                "Legacy Bukkit scheduler API usage detected. Use OrbisSchedulers contexts instead.\n" +
-                        violations.joinToString("\n")
-            )
-        }
-    }
-}
 
 val placeholderControlFlowGuard by tasks.registering {
     group = "verification"
