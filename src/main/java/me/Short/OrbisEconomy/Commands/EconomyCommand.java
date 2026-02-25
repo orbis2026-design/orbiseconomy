@@ -295,6 +295,8 @@ public class EconomyCommand
     // Method to execute the logic for the "set" sub-command
     private static void executeSetLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount, String currencyId)
     {
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(currencyId);
+
         if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
         {
             ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
@@ -302,13 +304,13 @@ public class EconomyCommand
             return;
         }
 
-        if (currencyId.equals("coins"))
+        if (normalizedCurrencyId.equals("coins"))
         {
             executeSetCoinsLogic(instance, ctx, target, amount);
         }
         else
         {
-            executeSetCurrencyLogic(instance, ctx, target, amount, currencyId);
+            executeSetCurrencyLogic(instance, ctx, target, amount, normalizedCurrencyId);
         }
     }
 
@@ -413,6 +415,8 @@ public class EconomyCommand
     // Method to execute the logic for the "give" sub-command
     private static void executeGiveLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount, String currencyId)
     {
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(currencyId);
+
         if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
         {
             ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
@@ -420,13 +424,13 @@ public class EconomyCommand
             return;
         }
 
-        if (currencyId.equals("coins"))
+        if (normalizedCurrencyId.equals("coins"))
         {
             executeGiveCoinsLogic(instance, ctx, target, amount);
         }
         else
         {
-            executeGiveCurrencyLogic(instance, ctx, target, amount, currencyId);
+            executeGiveCurrencyLogic(instance, ctx, target, amount, normalizedCurrencyId);
         }
     }
 
@@ -545,6 +549,8 @@ public class EconomyCommand
     // Method to execute the logic for the "take" sub-command
     private static void executeTakeLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, BigDecimal amount, String currencyId)
     {
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(currencyId);
+
         if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
         {
             ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
@@ -552,13 +558,13 @@ public class EconomyCommand
             return;
         }
 
-        if (currencyId.equals("coins"))
+        if (normalizedCurrencyId.equals("coins"))
         {
             executeTakeCoinsLogic(instance, ctx, target, amount);
         }
         else
         {
-            executeTakeCurrencyLogic(instance, ctx, target, amount, currencyId);
+            executeTakeCurrencyLogic(instance, ctx, target, amount, normalizedCurrencyId);
         }
     }
 
@@ -680,6 +686,8 @@ public class EconomyCommand
     // Method to execute the logic for the "reset" sub-command
     private static void executeResetLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, OfflinePlayer target, String currencyId)
     {
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(currencyId);
+
         if (!instance.getPlayerAccounts().containsKey(target.getUniqueId()))
         {
             ctx.getSource().getSender().sendMessage(instance.getMiniMessage().deserialize(instance.getConfig().getString("messages.error.no-account-other"),
@@ -687,13 +695,13 @@ public class EconomyCommand
             return;
         }
 
-        if (currencyId.equals("coins"))
+        if (normalizedCurrencyId.equals("coins"))
         {
             executeResetCoinsLogic(instance, ctx, target);
         }
         else
         {
-            executeResetCurrencyLogic(instance, ctx, target, currencyId);
+            executeResetCurrencyLogic(instance, ctx, target, normalizedCurrencyId);
         }
     }
 
