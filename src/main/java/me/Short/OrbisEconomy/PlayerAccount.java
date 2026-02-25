@@ -34,11 +34,11 @@ public class PlayerAccount
             balances = new ConcurrentHashMap<>();
             if (balance != null)
             {
-                balances.put("coins", balance);
+                balances.put(OrbisEconomy.normalizeCurrencyId("coins"), balance);
             }
             if (orbsBalance != null)
             {
-                balances.put("orbs", orbsBalance);
+                balances.put(OrbisEconomy.normalizeCurrencyId("orbs"), orbsBalance);
             }
         }
         else
@@ -61,7 +61,7 @@ public class PlayerAccount
     // Getter for a specific currency balance
     public BigDecimal getBalance(String currencyId)
     {
-        return balances.getOrDefault(currencyId, BigDecimal.ZERO);
+        return balances.getOrDefault(OrbisEconomy.normalizeCurrencyId(currencyId), BigDecimal.ZERO);
     }
 
     // Getter for the default "coins" currency balance - kept for Vault compatibility
@@ -87,7 +87,7 @@ public class PlayerAccount
     // Setter for a specific currency balance
     public void setBalance(String currencyId, BigDecimal amount)
     {
-        balances.put(currencyId, amount);
+        balances.put(OrbisEconomy.normalizeCurrencyId(currencyId), amount);
     }
 
     // Setter for the default "coins" currency balance - kept for Vault compatibility

@@ -83,6 +83,7 @@ public class BalanceCommand
     private static void executeCommandLogic(OrbisEconomy instance, final CommandContext<CommandSourceStack> ctx, @Nullable OfflinePlayer target, String currencyId)
     {
         final CommandSender sender = ctx.getSource().getSender();
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(currencyId);
 
         if (target == null)
         {
@@ -104,8 +105,8 @@ public class BalanceCommand
             return;
         }
 
-        BigDecimal balance = instance.getPlayerAccounts().get(target.getUniqueId()).getBalance(currencyId);
-        Currency currency = instance.getCurrencies().get(currencyId);
+        BigDecimal balance = instance.getPlayerAccounts().get(target.getUniqueId()).getBalance(normalizedCurrencyId);
+        Currency currency = instance.getCurrencies().get(normalizedCurrencyId);
         String formattedBalance = currency != null ? currency.formatAmount(balance) : balance.stripTrailingZeros().toPlainString();
 
         sender.sendMessage(instance.getMiniMessage().deserialize(

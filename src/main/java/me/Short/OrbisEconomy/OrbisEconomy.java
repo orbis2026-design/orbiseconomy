@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -305,9 +306,40 @@ public class OrbisEconomy extends JavaPlugin
                     PlayerAccount account = gson.fromJson(reader, PlayerAccount.class);
                     account.migrateFromLegacy();
 
+                    // Normalize historical balance keys (e.g. "Coins", " coins ") to canonical IDs
+                    Map<String, BigDecimal> balances = account.getBalances();
+                    Map<String, BigDecimal> normalizedBalances = new ConcurrentHashMap<>();
+                    boolean modified = false;
+
+                    for (Map.Entry<String, BigDecimal> balanceEntry : balances.entrySet())
+                    {
+                        String normalizedCurrencyId = normalizeCurrencyId(balanceEntry.getKey());
+                        BigDecimal existingAmount = normalizedBalances.putIfAbsent(normalizedCurrencyId, balanceEntry.getValue());
+
+                        if (existingAmount != null)
+                        {
+                            normalizedBalances.put(normalizedCurrencyId, existingAmount.add(balanceEntry.getValue()));
+                        }
+
+                        if (!normalizedCurrencyId.equals(balanceEntry.getKey()))
+                        {
+                            modified = true;
+                        }
+                    }
+
+                    if (normalizedBalances.size() != balances.size())
+                    {
+                        modified = true;
+                    }
+
+                    if (modified)
+                    {
+                        balances.clear();
+                        balances.putAll(normalizedBalances);
+                    }
+
                     // Add default balances for any currencies that are configured but missing from this account
                     // (e.g. when a new currency is added to config.yml after the account was first created)
-                    boolean modified = false;
                     for (Map.Entry<String, Currency> entry : currencies.entrySet())
                     {
                         if (!account.getBalances().containsKey(entry.getKey()))
@@ -475,7 +507,7 @@ public class OrbisEconomy extends JavaPlugin
                         .limit(100)
                         .toList();
 
-                topBalancesByCurrency.put(currencyId.toLowerCase(), topBalances);
+                topBalancesByCurrency.put(normalizeCurrencyId(currencyId), topBalances);
             }
 
             return new BalanceTop(topBalancesByCurrency, total);
@@ -587,6 +619,7 @@ public class OrbisEconomy extends JavaPlugin
     private Map<String, Currency> loadCurrencies()
     {
         Map<String, Currency> result = new LinkedHashMap<>();
+        Map<String, List<String>> collapsedCurrencyKeys = new LinkedHashMap<>();
 
         ConfigurationSection section = getConfig().getConfigurationSection("settings.currencies");
 
@@ -594,7 +627,9 @@ public class OrbisEconomy extends JavaPlugin
         {
             for (String id : section.getKeys(false))
             {
+                String normalizedId = normalizeCurrencyId(id);
                 String path = "settings.currencies." + id + ".";
+                collapsedCurrencyKeys.computeIfAbsent(normalizedId, ignored -> new ArrayList<>()).add(id);
 
                 try
                 {
@@ -606,13 +641,21 @@ public class OrbisEconomy extends JavaPlugin
                     String format = getConfig().getString(path + "format", "<amount> <name>");
                     RoundingMode roundingMode = RoundingMode.valueOf(getConfig().getString(path + "rounding-mode", "NONE"));
 
-                    result.put(id, new Currency(id, nameSingular, namePlural, defaultBalance, maxBalance, decimalPlaces, format, roundingMode));
+                    result.put(normalizedId, new Currency(normalizedId, nameSingular, namePlural, defaultBalance, maxBalance, decimalPlaces, format, roundingMode));
                 }
                 catch (IllegalArgumentException exception)
                 {
                     getLogger().log(Level.WARNING, "Failed to load currency '" + id + "' from config: " + exception.getMessage());
                 }
             }
+
+            collapsedCurrencyKeys.forEach((normalizedKey, originalKeys) ->
+            {
+                if (originalKeys.size() > 1)
+                {
+                    getLogger().warning("Duplicate currency keys collapse to normalized ID '" + normalizedKey + "': " + String.join(", ", originalKeys));
+                }
+            });
         }
 
         return result;
@@ -702,6 +745,11 @@ public class OrbisEconomy extends JavaPlugin
     public Map<String, Currency> getCurrencies()
     {
         return currencies;
+    }
+
+    public static String normalizeCurrencyId(String currencyId)
+    {
+        return currencyId == null ? "" : currencyId.trim().toLowerCase(Locale.ROOT);
     }
 
 }

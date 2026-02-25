@@ -56,7 +56,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return null;
         }
 
-        String normalizedParams = params.toLowerCase();
+        String normalizedParams = params.toLowerCase(java.util.Locale.ROOT);
         String[] splitParams = normalizedParams.split("_");
 
         // %orbiseconomy_balance_<currencyId>%
@@ -119,7 +119,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return "0";
         }
 
-        String normalizedCurrencyId = currencyId.toLowerCase();
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(currencyId);
         Currency currency = instance.getCurrencies().get(normalizedCurrencyId);
 
         if (currency == null)
@@ -145,7 +145,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return "N/A";
         }
 
-        String normalizedCurrencyId = currencyId.toLowerCase();
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(currencyId);
         Currency currency = instance.getCurrencies().get(normalizedCurrencyId);
 
         if (currency == null)
@@ -177,7 +177,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         Map.Entry<UUID, BigDecimal> entry = topBalances.get(position - 1);
-        String normalizedType = type.toLowerCase();
+        String normalizedType = type.toLowerCase(java.util.Locale.ROOT);
 
         if (normalizedType.equals("formatted"))
         {
@@ -230,7 +230,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return "N/A";
         }
 
-        String normalizedType = type.toLowerCase();
+        String normalizedType = type.toLowerCase(java.util.Locale.ROOT);
 
         if (normalizedType.equals("formatted"))
         {

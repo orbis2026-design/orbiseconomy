@@ -30,7 +30,7 @@ public class BalanceTop
             return Collections.emptyList();
         }
 
-        List<Map.Entry<UUID, BigDecimal>> entries = topBalancesByCurrency.get(currencyId.toLowerCase());
+        List<Map.Entry<UUID, BigDecimal>> entries = topBalancesByCurrency.get(OrbisEconomy.normalizeCurrencyId(currencyId));
         return entries == null ? Collections.emptyList() : entries;
     }
 
