@@ -35,11 +35,12 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -145,7 +146,7 @@ public class OrbisEconomy extends JavaPlugin
         permissions = getServer().getServicesManager().getRegistration(Permission.class).getProvider();
 
         // Initial empty BalanceTop data
-        balanceTop = new BalanceTop(new LinkedHashMap<>(), BigDecimal.ZERO);
+        balanceTop = new BalanceTop(new HashMap<>(), BigDecimal.ZERO);
 
         // Get instance of the MiniMessage API
         miniMessage = MiniMessage.miniMessage();
@@ -431,35 +432,50 @@ public class OrbisEconomy extends JavaPlugin
     {
         return CompletableFuture.supplyAsync(() ->
         {
-            Map<UUID, BigDecimal> unsortedBalances = new HashMap<>();
+            Map<String, List<Map.Entry<UUID, BigDecimal>>> topBalancesByCurrency = new HashMap<>();
             BigDecimal total = BigDecimal.ZERO;
 
             // Get player names and their balances in no particular order, excluding banned players if config.yml says to not include them - the `Bukkit.getOfflinePlayer(uuid).isBanned()` is the only thing here that might not be safe to run async, but no issues so far in testing
-            for (UUID uuid : playerAccounts.keySet())
+            for (String currencyId : currencies.keySet())
             {
-                OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
+                List<Map.Entry<UUID, BigDecimal>> balancesForCurrency = new ArrayList<>();
 
-                if (!excludedPlayers.contains(uuid) && !(balanceTopConsiderExcludePermission && permissions.playerHas(null, player, "orbiseconomy.balancetop.exclude")) && (!balanceTopExcludePermanentlyBannedPlayers || !((liteBansInstalled && Util.isPlayerLiteBansPermanentlyBanned(uuid).join()) || player.isBanned())))
+                for (UUID uuid : playerAccounts.keySet())
                 {
-                    PlayerAccount account = playerAccounts.get(uuid);
-                    BigDecimal balance = account.getBalance();
+                    OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
 
-                    total = total.add(balance);
-
-                    if (balance.compareTo(balanceTopMinBalance) >= 0)
+                    if (!excludedPlayers.contains(uuid) && !(balanceTopConsiderExcludePermission && permissions.playerHas(null, player, "orbiseconomy.balancetop.exclude")) && (!balanceTopExcludePermanentlyBannedPlayers || !((liteBansInstalled && Util.isPlayerLiteBansPermanentlyBanned(uuid).join()) || player.isBanned())))
                     {
-                        unsortedBalances.put(uuid, balance);
+                        PlayerAccount account = playerAccounts.get(uuid);
+
+                        if (account == null)
+                        {
+                            continue;
+                        }
+
+                        BigDecimal balance = account.getBalance(currencyId);
+
+                        if ("coins".equalsIgnoreCase(currencyId))
+                        {
+                            total = total.add(balance);
+                        }
+
+                        if (balance.compareTo(balanceTopMinBalance) >= 0)
+                        {
+                            balancesForCurrency.add(Map.entry(uuid, balance));
+                        }
                     }
                 }
+
+                List<Map.Entry<UUID, BigDecimal>> topBalances = balancesForCurrency.stream()
+                        .sorted((first, second) -> second.getValue().compareTo(first.getValue()))
+                        .limit(100)
+                        .toList();
+
+                topBalancesByCurrency.put(currencyId.toLowerCase(), topBalances);
             }
 
-            // Create and return sorted version of "unsortedBalances"
-            LinkedHashMap<UUID, BigDecimal> topBalances = new LinkedHashMap<>();
-            unsortedBalances.entrySet().stream()
-                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                    .forEach(entry -> topBalances.put(entry.getKey(), entry.getValue()));
-
-            return new BalanceTop(topBalances, total);
+            return new BalanceTop(topBalancesByCurrency, total);
         });
     }
 

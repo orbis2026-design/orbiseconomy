@@ -1,24 +1,20 @@
 package me.Short.OrbisEconomy;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 public class PlaceholderAPI extends PlaceholderExpansion
 {
 
     // Instance of "OrbisEconomy"
-    private OrbisEconomy instance;
+    private final OrbisEconomy instance;
 
     // Constructor
     public PlaceholderAPI(OrbisEconomy instance)
@@ -29,7 +25,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
     @Override
     public @NotNull String getIdentifier()
     {
-        return instance.getPluginMeta().getName();
+        return "orbiseconomy";
     }
 
     @Override
@@ -54,218 +50,149 @@ public class PlaceholderAPI extends PlaceholderExpansion
     @Override
     public String onRequest(OfflinePlayer player, String params)
     {
-        if (params.toLowerCase().startsWith("balance_formatted_"))
+        if (params == null || params.isBlank())
         {
-            if (player == null || !instance.getPlayerAccounts().containsKey(player.getUniqueId()))
-            {
-                return "0";
-            }
-
-            String currencyId = params.substring("balance_formatted_".length()).toLowerCase();
-            Currency currency = instance.getCurrencies().get(currencyId);
-
-            if (currency == null)
-            {
-                return "0";
-            }
-
-            PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
-            return currency.formatAmount(account.getBalance(currencyId));
+            return null;
         }
 
-        if (params.toLowerCase().startsWith("balance_"))
+        String normalizedParams = params.toLowerCase();
+        String[] splitParams = normalizedParams.split("_");
+
+        // %orbiseconomy_balance_<currencyId>%
+        if (splitParams.length == 2 && splitParams[0].equals("balance"))
         {
-            if (player == null || !instance.getPlayerAccounts().containsKey(player.getUniqueId()))
-            {
-                return "0";
-            }
+            return resolvePlayerBalance(player, splitParams[1], false);
+        }
 
-            String currencyId = params.substring("balance_".length()).toLowerCase();
-            Currency currency = instance.getCurrencies().get(currencyId);
+        // %orbiseconomy_balance_formatted_<currencyId>%
+        if (splitParams.length == 3 && splitParams[0].equals("balance") && splitParams[1].equals("formatted"))
+        {
+            return resolvePlayerBalance(player, splitParams[2], true);
+        }
 
-            if (currency == null)
-            {
-                return "0";
-            }
+        // %orbiseconomy_top_<currencyId>_<position>_<type>%
+        if (splitParams.length == 4 && splitParams[0].equals("top"))
+        {
+            return resolveTopPlaceholder(splitParams[1], splitParams[2], splitParams[3]);
+        }
 
-            PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
-            return account.getBalance(currencyId).toPlainString();
+        // Keep backward compatibility for %orbiseconomy_richest_<position>_<type>% using default "coins" currency
+        if (splitParams.length == 3 && splitParams[0].equals("richest"))
+        {
+            return resolveTopPlaceholder("coins", splitParams[1], splitParams[2]);
         }
 
         // %orbiseconomy_accepting_payments%
-        if (params.equalsIgnoreCase("accepting_payments"))
+        if (normalizedParams.equals("accepting_payments"))
         {
             if (player == null)
             {
                 return null;
             }
 
-            return Boolean.toString(instance.getPlayerAccounts().get(player.getUniqueId()).getAcceptingPayments());
+            PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
+            return account == null ? "0" : Boolean.toString(account.getAcceptingPayments());
         }
 
         // %orbiseconomy_combined_total_balance%
-        if (params.equalsIgnoreCase("combined_total_balance"))
+        if (normalizedParams.equals("combined_total_balance"))
         {
             return instance.getBalanceTop().getCombinedTotalBalance().toPlainString();
         }
 
         // %orbiseconomy_combined_total_balance_formatted%
-        if (params.equalsIgnoreCase("combined_total_balance_formatted"))
+        if (normalizedParams.equals("combined_total_balance_formatted"))
         {
             return instance.getEconomy().format(instance.getBalanceTop().getCombinedTotalBalance().doubleValue());
         }
 
-        // %orbiseconomy_richest_<position>_name%
-        if (Pattern.compile("richest_[1-9][0-9]*_name$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_name"...
-        {
-            try
-            {
-                int position = Integer.parseInt(StringUtils.replaceOnceIgnoreCase(StringUtils.replaceOnceIgnoreCase(params, "richest_", ""), "_name", ""));
-
-                List<Map.Entry<UUID, BigDecimal>> topBalancesEntries = new ArrayList<>(instance.getBalanceTop().getTopBalances().entrySet());
-
-                if (position <= topBalancesEntries.size())
-                {
-                    return instance.getOfflinePlayerNames().get(topBalancesEntries.get(position - 1).getKey());
-                }
-
-                return instance.getConfig().getString("settings.placeholders.balancetop-position-name-none");
-            }
-            catch (NumberFormatException exception)
-            {
-                return null;
-            }
-        }
-
-        // %orbiseconomy_richest_<position>_uuid%
-        if (Pattern.compile("richest_[1-9][0-9]*_uuid$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_uuid"...
-        {
-            try
-            {
-                int position = Integer.parseInt(StringUtils.replaceOnceIgnoreCase(StringUtils.replaceOnceIgnoreCase(params, "richest_", ""), "_uuid", ""));
-
-                List<Map.Entry<UUID, BigDecimal>> topBalancesEntries = new ArrayList<>(instance.getBalanceTop().getTopBalances().entrySet());
-
-                if (position <= topBalancesEntries.size())
-                {
-                    return topBalancesEntries.get(position - 1).getKey().toString();
-                }
-
-                return instance.getConfig().getString("settings.placeholders.balancetop-position-uuid-none");
-            }
-            catch (NumberFormatException exception)
-            {
-                return null;
-            }
-        }
-
-        // %orbiseconomy_richest_<position>_balance%
-        if (Pattern.compile("richest_[1-9][0-9]*_balance$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_balance"...
-        {
-            try
-            {
-                int position = Integer.parseInt(StringUtils.replaceOnceIgnoreCase(StringUtils.replaceOnceIgnoreCase(params, "richest_", ""), "_balance", ""));
-
-                List<Map.Entry<UUID, BigDecimal>> topBalancesEntries = new ArrayList<>(instance.getBalanceTop().getTopBalances().entrySet());
-
-                if (position <= topBalancesEntries.size())
-                {
-                    return topBalancesEntries.get(position - 1).getValue().toPlainString();
-                }
-
-                return instance.getConfig().getString("settings.placeholders.balancetop-position-balance-none");
-            }
-            catch (NumberFormatException exception)
-            {
-                return null;
-            }
-        }
-
-        // %orbiseconomy_richest_<position>_balance_formatted%
-        if (Pattern.compile("richest_[1-9][0-9]*_balance_formatted$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_balance_formatted"...
-        {
-            try
-            {
-                int position = Integer.parseInt(StringUtils.replaceOnceIgnoreCase(StringUtils.replaceOnceIgnoreCase(params, "richest_", ""), "_balance_formatted", ""));
-
-                List<Map.Entry<UUID, BigDecimal>> topBalancesEntries = new ArrayList<>(instance.getBalanceTop().getTopBalances().entrySet());
-
-                if (position <= topBalancesEntries.size())
-                {
-                    return instance.getEconomy().format(topBalancesEntries.get(position - 1).getValue().doubleValue());
-                }
-
-                return instance.getConfig().getString("settings.placeholders.balancetop-position-balance_formatted-none");
-            }
-            catch (NumberFormatException exception)
-            {
-                return null;
-            }
-        }
-
-        // %orbiseconomy_richest_<position>_entry%
-        if (Pattern.compile("richest_[1-9][0-9]*_entry$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_entry"...
-        {
-            try
-            {
-                int position = Integer.parseInt(StringUtils.replaceOnceIgnoreCase(StringUtils.replaceOnceIgnoreCase(params, "richest_", ""), "_entry", ""));
-
-                List<Map.Entry<UUID, BigDecimal>> topBalancesEntries = new ArrayList<>(instance.getBalanceTop().getTopBalances().entrySet());
-
-                if (position <= topBalancesEntries.size())
-                {
-                    Map.Entry<UUID, BigDecimal> topBalancesEntry = topBalancesEntries.get(position - 1);
-                    OfflinePlayer entryPlayer = Bukkit.getOfflinePlayer(topBalancesEntry.getKey());
-
-                    String entry = instance.getConfig().getString(player == entryPlayer ? "messages.balancetop.entry-you" : "messages.balancetop.entry")
-                            .replace("<position>", Integer.toString(position))
-                            .replace("<player>", entryPlayer.getName())
-                            .replace("<balance>", instance.getEconomy().format(topBalancesEntry.getValue().doubleValue()));
-
-                    return entry
-                            .replace("<dots>", new String(new char[Util.getNumberOfDotsToAlign(PlainTextComponentSerializer.plainText().serialize(instance.getMiniMessage().deserialize(entry)), true)]).replace("\0", "."));
-                }
-
-                return instance.getConfig().getString("settings.placeholders.balancetop-position-entry-none");
-            }
-            catch (NumberFormatException exception)
-            {
-                return null;
-            }
-        }
-
-        // %orbiseconomy_richest_<position>_entry_legacy%
-        if (Pattern.compile("richest_[1-9][0-9]*_entry_legacy$", Pattern.CASE_INSENSITIVE).matcher(params).find()) // If the placeholder follows the format "richest_<number>_entry_legacy"...
-        {
-            try
-            {
-                int position = Integer.parseInt(StringUtils.replaceOnceIgnoreCase(StringUtils.replaceOnceIgnoreCase(params, "richest_", ""), "_entry_legacy", ""));
-
-                List<Map.Entry<UUID, BigDecimal>> topBalancesEntries = new ArrayList<>(instance.getBalanceTop().getTopBalances().entrySet());
-
-                if (position <= topBalancesEntries.size())
-                {
-                    Map.Entry<UUID, BigDecimal> topBalancesEntry = topBalancesEntries.get(position - 1);
-                    OfflinePlayer entryPlayer = Bukkit.getOfflinePlayer(topBalancesEntry.getKey());
-
-                    String entry = instance.getConfig().getString(player == entryPlayer ? "messages.balancetop.entry-you" : "messages.balancetop.entry")
-                            .replace("<position>", Integer.toString(position))
-                            .replace("<player>", entryPlayer.getName())
-                            .replace("<balance>", instance.getEconomy().format(topBalancesEntry.getValue().doubleValue()));
-
-                    return instance.getLegacyComponentSerializer().serialize(instance.getMiniMessage().deserialize(entry
-                            .replace("<dots>", new String(new char[Util.getNumberOfDotsToAlign(PlainTextComponentSerializer.plainText().serialize(instance.getMiniMessage().deserialize(entry)), true)]).replace("\0", "."))));
-                }
-
-                return instance.getConfig().getString("settings.placeholders.balancetop-position-entry-legacy-none");
-            }
-            catch (NumberFormatException exception)
-            {
-                return null;
-            }
-        }
-
         return null;
+    }
+
+    private String resolvePlayerBalance(OfflinePlayer player, String currencyId, boolean formatted)
+    {
+        if (player == null || currencyId == null)
+        {
+            return "0";
+        }
+
+        String normalizedCurrencyId = currencyId.toLowerCase();
+        Currency currency = instance.getCurrencies().get(normalizedCurrencyId);
+
+        if (currency == null)
+        {
+            return "0";
+        }
+
+        PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
+
+        if (account == null)
+        {
+            return "0";
+        }
+
+        BigDecimal balance = account.getBalance(normalizedCurrencyId);
+        return formatted ? currency.formatAmount(balance) : balance.toPlainString();
+    }
+
+    private String resolveTopPlaceholder(String currencyId, String positionInput, String type)
+    {
+        if (currencyId == null || positionInput == null || type == null)
+        {
+            return "N/A";
+        }
+
+        String normalizedCurrencyId = currencyId.toLowerCase();
+        Currency currency = instance.getCurrencies().get(normalizedCurrencyId);
+
+        if (currency == null)
+        {
+            return "N/A";
+        }
+
+        int position;
+
+        try
+        {
+            position = Integer.parseInt(positionInput);
+        }
+        catch (NumberFormatException ignored)
+        {
+            return "N/A";
+        }
+
+        if (position <= 0)
+        {
+            return "N/A";
+        }
+
+        List<Map.Entry<UUID, BigDecimal>> topBalances = instance.getBalanceTop().getTopBalances(normalizedCurrencyId);
+
+        if (position > topBalances.size())
+        {
+            return "N/A";
+        }
+
+        Map.Entry<UUID, BigDecimal> entry = topBalances.get(position - 1);
+
+        if (type.equals("name"))
+        {
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+            String name = offlinePlayer.getName();
+            return name == null ? "N/A" : name;
+        }
+
+        if (type.equals("balance"))
+        {
+            return entry.getValue().toPlainString();
+        }
+
+        if (type.equals("formatted"))
+        {
+            return currency.formatAmount(entry.getValue());
+        }
+
+        return "N/A";
     }
 
 }
