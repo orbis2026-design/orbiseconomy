@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,7 +57,21 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return null;
         }
 
-        String normalizedParams = params.toLowerCase(java.util.Locale.ROOT);
+        String normalizedParams = params.toLowerCase(Locale.ROOT);
+
+        // %orbiseconomy_balance_for_uuid_<currencyId>_<uuid>%
+        // %orbiseconomy_balance_formatted_for_uuid_<currencyId>_<uuid>%
+        if (normalizedParams.startsWith("balance_for_uuid_") || normalizedParams.startsWith("balance_formatted_for_uuid_"))
+        {
+            return resolveExplicitTargetBalance(params, "for_uuid");
+        }
+
+        // %orbiseconomy_balance_for_name_<currencyId>_<name>%
+        // %orbiseconomy_balance_formatted_for_name_<currencyId>_<name>%
+        if (normalizedParams.startsWith("balance_for_name_") || normalizedParams.startsWith("balance_formatted_for_name_"))
+        {
+            return resolveExplicitTargetBalance(params, "for_name");
+        }
 
         // %orbiseconomy_balance_<currencyId>%
         if (normalizedParams.startsWith("balance_"))
@@ -104,7 +119,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
         {
             if (player == null)
             {
-                return null;
+                return getPlayerRequiredFallback();
             }
 
             PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
@@ -180,6 +195,71 @@ public class PlaceholderAPI extends PlaceholderExpansion
     {
         if (player == null || currencyId == null)
         {
+            return getPlayerRequiredFallback();
+        }
+
+        return resolveBalanceByUuid(player.getUniqueId(), currencyId, formatted);
+    }
+
+    private String resolveExplicitTargetBalance(String input, String targetType)
+    {
+        if (input == null || targetType == null)
+        {
+            return "0";
+        }
+
+        String normalizedInput = input.toLowerCase(Locale.ROOT);
+
+        boolean formatted = normalizedInput.startsWith("balance_formatted_");
+        String prefix = formatted ? "balance_formatted_" + targetType + "_" : "balance_" + targetType + "_";
+
+        if (!normalizedInput.startsWith(prefix))
+        {
+            return "0";
+        }
+
+        String payload = input.substring(prefix.length());
+        int firstSeparator = payload.indexOf('_');
+
+        if (firstSeparator <= 0 || firstSeparator >= payload.length() - 1)
+        {
+            return "0";
+        }
+
+        String currencyId = payload.substring(0, firstSeparator);
+        String target = payload.substring(firstSeparator + 1);
+
+        if (targetType.equals("for_uuid"))
+        {
+            try
+            {
+                return resolveBalanceByUuid(UUID.fromString(target), currencyId, formatted);
+            }
+            catch (IllegalArgumentException ignored)
+            {
+                return "0";
+            }
+        }
+
+        if (targetType.equals("for_name"))
+        {
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayerIfCached(target);
+
+            if (offlinePlayer == null)
+            {
+                return "0";
+            }
+
+            return resolveBalanceByUuid(offlinePlayer.getUniqueId(), currencyId, formatted);
+        }
+
+        return "0";
+    }
+
+    private String resolveBalanceByUuid(UUID playerUuid, String currencyId, boolean formatted)
+    {
+        if (playerUuid == null || currencyId == null)
+        {
             return "0";
         }
 
@@ -191,7 +271,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return "0";
         }
 
-        PlayerAccount account = instance.getPlayerAccounts().get(player.getUniqueId());
+        PlayerAccount account = instance.getPlayerAccounts().get(playerUuid);
 
         if (account == null)
         {
@@ -241,7 +321,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         Map.Entry<UUID, BigDecimal> entry = topBalances.get(position - 1);
-        String normalizedType = type.toLowerCase(java.util.Locale.ROOT);
+        String normalizedType = type.toLowerCase(Locale.ROOT);
 
         if (normalizedType.equals("formatted"))
         {
@@ -294,7 +374,7 @@ public class PlaceholderAPI extends PlaceholderExpansion
             return "N/A";
         }
 
-        String normalizedType = type.toLowerCase(java.util.Locale.ROOT);
+        String normalizedType = type.toLowerCase(Locale.ROOT);
 
         if (normalizedType.equals("formatted"))
         {
@@ -307,6 +387,11 @@ public class PlaceholderAPI extends PlaceholderExpansion
         }
 
         return instance.getConfig().getString("settings.placeholders.balancetop-position-" + normalizedType + "-none", "N/A");
+    }
+
+    private String getPlayerRequiredFallback()
+    {
+        return instance.getConfig().getString("settings.placeholders.player-required-fallback", "PLAYER_REQUIRED");
     }
 
     private record TopPlaceholderInput(String currencyId, String position, String type)

@@ -185,6 +185,10 @@ settings:
   # Settings related to PlaceholderAPI placeholders
   placeholders:
 
+    # Fallback for player-scoped placeholders when no player context is available
+    # Example placeholders impacted: %orbiseconomy_balance_<currencyId>%, %orbiseconomy_balance_formatted_<currencyId>%, %orbiseconomy_accepting_payments%
+    player-required-fallback: "PLAYER_REQUIRED"
+
     # Fallback for %orbiseconomy_top_<currencyId>_<position>_name% and %orbiseconomy_richest_<position>_name%
     balancetop-position-name-none: "N/A"
 

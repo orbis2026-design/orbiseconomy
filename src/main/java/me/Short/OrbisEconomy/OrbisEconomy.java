@@ -670,7 +670,9 @@ public class OrbisEconomy extends JavaPlugin
         {
             getLogger().warning("No currencies are configured. Placeholder examples will use <currencyId>.");
             getLogger().info("Vault placeholders are default-currency compatible only (coins).");
-            getLogger().info("Use multi-currency placeholders: %orbiseconomy_balance_<currencyId>%, %orbiseconomy_balance_formatted_<currencyId>%, %orbiseconomy_top_<currencyId>_<position>_<type>%");
+            getLogger().info("Player-scoped placeholders (require a player context): %orbiseconomy_balance_<currencyId>%, %orbiseconomy_balance_formatted_<currencyId>%, %orbiseconomy_accepting_payments%");
+            getLogger().info("Global placeholders (safe for holograms/leaderboards): %orbiseconomy_top_<currencyId>_<position>_<type>%, %orbiseconomy_richest_<position>_<type>%, %orbiseconomy_combined_total_balance%, %orbiseconomy_combined_total_balance_formatted%");
+            getLogger().info("Explicit target placeholders (for non-player contexts): %orbiseconomy_balance_for_uuid_<currencyId>_<uuid>%, %orbiseconomy_balance_formatted_for_uuid_<currencyId>_<uuid>%");
             return;
         }
 
@@ -678,10 +680,20 @@ public class OrbisEconomy extends JavaPlugin
 
         getLogger().info("Available currency IDs: " + String.join(", ", currencyIds));
         getLogger().info("Vault placeholders are default-currency compatible only (coins).");
-        getLogger().info("Multi-currency placeholders:");
+        getLogger().info("Player-scoped placeholders (require player context):");
         getLogger().info(" - %orbiseconomy_balance_" + exampleCurrencyId + "%");
         getLogger().info(" - %orbiseconomy_balance_formatted_" + exampleCurrencyId + "%");
+        getLogger().info(" - %orbiseconomy_accepting_payments%");
+        getLogger().info("Global placeholders (safe for holograms/leaderboards):");
         getLogger().info(" - %orbiseconomy_top_" + exampleCurrencyId + "_1_balance_formatted%");
+        getLogger().info(" - %orbiseconomy_richest_1_balance_formatted%");
+        getLogger().info(" - %orbiseconomy_combined_total_balance%");
+        getLogger().info(" - %orbiseconomy_combined_total_balance_formatted%");
+        getLogger().info("Explicit target placeholders (non-player contexts):");
+        getLogger().info(" - %orbiseconomy_balance_for_uuid_" + exampleCurrencyId + "_<uuid>%");
+        getLogger().info(" - %orbiseconomy_balance_formatted_for_uuid_" + exampleCurrencyId + "_<uuid>%");
+        getLogger().info(" - %orbiseconomy_balance_for_name_" + exampleCurrencyId + "_<name>%");
+        getLogger().info(" - %orbiseconomy_balance_formatted_for_name_" + exampleCurrencyId + "_<name>%");
     }
 
     // Method to create a new PlayerAccount with default balances for all configured currencies
