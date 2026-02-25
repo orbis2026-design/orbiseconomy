@@ -42,3 +42,14 @@ Explicit player-target placeholders for non-player contexts:
 - `%orbiseconomy_balance_formatted_for_uuid_<currencyId>_<uuid>%`
 - `%orbiseconomy_balance_for_name_<currencyId>_<name>%`
 - `%orbiseconomy_balance_formatted_for_name_<currencyId>_<name>%`
+
+## Currency ID normalization safety
+
+Currency keys under `settings.currencies` must normalize uniquely (trim + lowercase).
+
+Examples of invalid collisions:
+
+- `Coins` and `coins`
+- `orbs` and ` orbs `
+
+On collision, startup throws an error and aborts loading so configuration issues are fixed before runtime.

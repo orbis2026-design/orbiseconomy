@@ -46,3 +46,10 @@ For non-player contexts that still need a player's balance, use explicit target 
 - `%orbiseconomy_balance_formatted_for_uuid_<currencyId>_<uuid>%`
 - `%orbiseconomy_balance_for_name_<currencyId>_<name>%`
 - `%orbiseconomy_balance_formatted_for_name_<currencyId>_<name>%`
+
+## Storage model and migration
+
+- `PlayerAccount` uses the `balances` map as canonical currency storage (`normalizedCurrencyId -> BigDecimal`).
+- Legacy JSON fields (`balance`, `orbsBalance`) are treated as migration-only inputs during deserialization.
+- Command logic should use generic currency accessors (`getBalance(currencyId)`, `setBalance(currencyId, amount)`) for forward compatibility.
+- Startup now fails fast when configured currency keys collide after normalization (`OrbisEconomy.normalizeCurrencyId`).
