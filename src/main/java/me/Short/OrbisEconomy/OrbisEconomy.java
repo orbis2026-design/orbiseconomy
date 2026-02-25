@@ -98,8 +98,6 @@ public class OrbisEconomy extends JavaPlugin
     // Instance of the LegacyComponentSerializer API
     private LegacyComponentSerializer legacyComponentSerializer;
 
-    // Whether LiteBans is installed - for checking in the "updateBalanceTop" method
-    private boolean liteBansInstalled;
 
     // Registry of all configured currencies, keyed by currency ID (e.g. "coins", "orbs")
     private Map<String, Currency> currencies;
@@ -195,8 +193,6 @@ public class OrbisEconomy extends JavaPlugin
             new EconomyBridgeIntegration(this).register();
         }
 
-        // Get whether LiteBans is installed
-        liteBansInstalled = pluginManager.getPlugin("LiteBans") != null;
 
         // bStats
         Metrics metrics = new Metrics(this, 13836);
@@ -396,14 +392,64 @@ public class OrbisEconomy extends JavaPlugin
                 return;
             }
 
-            // Call "updateBalanceTop", passing in the HashSet of excluded players' UUIDs
-            updateBalanceTop(balanceTopSortEvent.getExcludedPlayers()).thenAccept(balanceTop ->
+            // Create immutable snapshot candidates on the server thread
+            List<BalanceTopCandidate> balanceTopCandidates = collectBalanceTopCandidates(balanceTopSortEvent.getExcludedPlayers());
+
+            // Process snapshot data async, then apply results back on the server thread
+            updateBalanceTop(balanceTopCandidates).whenComplete((updatedBalanceTop, throwable) -> Bukkit.getScheduler().runTask(this, () ->
             {
-                this.balanceTop = balanceTop;
+                if (throwable != null)
+                {
+                    getLogger().log(Level.WARNING, "Failed to update BalanceTop.", throwable);
+                }
+                else
+                {
+                    this.balanceTop = updatedBalanceTop;
+                }
 
                 updateBalanceTopTaskRunning.set(false);
-            });
+            }));
         }, 0L, getConfig().getLong("settings.balancetop.update-task-frequency"));
+    }
+
+    // Method to collect immutable snapshot candidates for BalanceTop processing
+    private List<BalanceTopCandidate> collectBalanceTopCandidates(Set<UUID> excludedPlayers)
+    {
+        List<BalanceTopCandidate> candidates = new ArrayList<>(playerAccounts.size());
+
+        for (Map.Entry<UUID, PlayerAccount> entry : playerAccounts.entrySet())
+        {
+            UUID uuid = entry.getKey();
+            PlayerAccount account = entry.getValue();
+
+            if (account == null)
+            {
+                continue;
+            }
+
+            OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
+
+            Map<String, BigDecimal> balancesSnapshot = new HashMap<>();
+            for (String currencyId : currencies.keySet())
+            {
+                balancesSnapshot.put(currencyId, account.getBalance(currencyId));
+            }
+
+            boolean excludedByPermission = balanceTopConsiderExcludePermission
+                    && permissions != null
+                    && permissions.playerHas(null, player, "orbiseconomy.balancetop.exclude");
+            boolean excludedByBan = balanceTopExcludePermanentlyBannedPlayers && player.isBanned();
+
+            candidates.add(new BalanceTopCandidate(
+                    uuid,
+                    Map.copyOf(balancesSnapshot),
+                    excludedPlayers.contains(uuid),
+                    excludedByPermission,
+                    excludedByBan
+            ));
+        }
+
+        return List.copyOf(candidates);
     }
 
     // Method to repeatedly call `saveDirtyPlayerAccounts()` async
@@ -462,33 +508,23 @@ public class OrbisEconomy extends JavaPlugin
         }
     }
 
-    // Method to update BalanceTop async
-    private CompletableFuture<BalanceTop> updateBalanceTop(Set<UUID> excludedPlayers)
+    // Method to update BalanceTop async using immutable snapshot data
+    private CompletableFuture<BalanceTop> updateBalanceTop(List<BalanceTopCandidate> candidates)
     {
         return CompletableFuture.supplyAsync(() ->
         {
             Map<String, List<Map.Entry<UUID, BigDecimal>>> topBalancesByCurrency = new HashMap<>();
             BigDecimal total = BigDecimal.ZERO;
 
-            // Get player names and their balances in no particular order, excluding banned players if config.yml says to not include them - the `Bukkit.getOfflinePlayer(uuid).isBanned()` is the only thing here that might not be safe to run async, but no issues so far in testing
             for (String currencyId : currencies.keySet())
             {
                 List<Map.Entry<UUID, BigDecimal>> balancesForCurrency = new ArrayList<>();
 
-                for (UUID uuid : playerAccounts.keySet())
+                for (BalanceTopCandidate candidate : candidates)
                 {
-                    OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
-
-                    if (!excludedPlayers.contains(uuid) && !(balanceTopConsiderExcludePermission && permissions.playerHas(null, player, "orbiseconomy.balancetop.exclude")) && (!balanceTopExcludePermanentlyBannedPlayers || !((liteBansInstalled && Util.isPlayerLiteBansPermanentlyBanned(uuid).join()) || player.isBanned())))
+                    if (!candidate.excludedByEvent() && !candidate.excludedByPermission() && !candidate.excludedByBan())
                     {
-                        PlayerAccount account = playerAccounts.get(uuid);
-
-                        if (account == null)
-                        {
-                            continue;
-                        }
-
-                        BigDecimal balance = account.getBalance(currencyId);
+                        BigDecimal balance = candidate.balances().getOrDefault(currencyId, BigDecimal.ZERO);
 
                         if ("coins".equalsIgnoreCase(currencyId))
                         {
@@ -497,7 +533,7 @@ public class OrbisEconomy extends JavaPlugin
 
                         if (balance.compareTo(balanceTopMinBalance) >= 0)
                         {
-                            balancesForCurrency.add(Map.entry(uuid, balance));
+                            balancesForCurrency.add(Map.entry(candidate.uuid(), balance));
                         }
                     }
                 }
@@ -512,6 +548,11 @@ public class OrbisEconomy extends JavaPlugin
 
             return new BalanceTop(topBalancesByCurrency, total);
         });
+    }
+
+    // Immutable snapshot candidate used by BalanceTop two-phase processing
+    private record BalanceTopCandidate(UUID uuid, Map<String, BigDecimal> balances, boolean excludedByEvent, boolean excludedByPermission, boolean excludedByBan)
+    {
     }
 
     // Method to reload the config and data files
