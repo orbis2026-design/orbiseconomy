@@ -7,25 +7,29 @@ api-version: '1.21.11'
 dependencies:
   server:
     Vault:
-      load: BEFORE
+      load: AFTER
       required: true
       join-classpath: true
     PlaceholderAPI:
-      load: BEFORE
+      load: AFTER
       required: false
       join-classpath: true
     LiteBans:
       load: BEFORE
       required: false
       join-classpath: true
-    EconomyBridge:
-      load: BEFORE
+    NightCore:
+      load: AFTER
       required: false
       join-classpath: true
     OrbisPaperAgent:
-      load: BEFORE
+      load: AFTER
       required: false
       join-classpath: true
+    OrbisShop:
+      load: BEFORE
+      required: false
+      join-classpath: false
     OrbisLoot:
       load: AFTER
       required: false
