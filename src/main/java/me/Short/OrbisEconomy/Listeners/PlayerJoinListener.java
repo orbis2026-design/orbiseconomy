@@ -1,9 +1,9 @@
 package me.Short.OrbisEconomy.Listeners;
 
 import com.google.gson.JsonObject;
+import me.Short.OrbisEconomy.Economy;
 import me.Short.OrbisEconomy.OrbisEconomy;
 import me.Short.OrbisEconomy.PremiumBalance;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

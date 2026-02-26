@@ -15,7 +15,6 @@ import me.Short.OrbisEconomy.Events.BalanceTopSortEvent;
 import me.Short.OrbisEconomy.Listeners.PlayerJoinListener;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.milkbowl.vault.permission.Permission;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -71,11 +70,8 @@ public class OrbisEconomy extends JavaPlugin
     // Instance of the Gson library
     private Gson gson;
 
-    // Instance of the Vault Economy API
-    private net.milkbowl.vault.economy.Economy economy;
-
-    // Instance of the Vault Permissions API
-    private Permission permissions;
+    // Instance of the economy service implementation (Vault-backed when Vault API is present)
+    private Economy economy;
 
     // Cache of all players' usernames, for the purpose of offline player tab completion
     private Map<UUID, String> offlinePlayerNames;
@@ -147,11 +143,15 @@ public class OrbisEconomy extends JavaPlugin
         gson = new GsonBuilder().setPrettyPrinting().create();
 
         // Register OrbisEconomy as a Vault Economy provider
-        economy = new Economy(this);
-        Bukkit.getServicesManager().register(net.milkbowl.vault.economy.Economy.class, economy, this, ServicePriority.Highest);
+        if (!isClassPresent("net.milkbowl.vault.economy.Economy"))
+        {
+            getLogger().severe("Vault API classes are unavailable at runtime. Ensure Vault is installed and loads before OrbisEconomy.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
-        // Hook into Vault Permissions
-        permissions = getServer().getServicesManager().getRegistration(Permission.class).getProvider();
+        economy = new Economy(this);
+        registerVaultEconomyService();
 
         // Initial empty BalanceTop data
         balanceTop = new BalanceTop(new HashMap<>(), BigDecimal.ZERO);
@@ -193,15 +193,24 @@ public class OrbisEconomy extends JavaPlugin
             new PlaceholderAPI(this).register();
         }
 
-        // Register EconomyBridge providers, if NightCore is installed
-        if (pluginManager.getPlugin("NightCore") != null)
+        // Register EconomyBridge providers, if EconomyBridge runtime is available
+        if (pluginManager.getPlugin("EconomyBridge") != null
+                && isClassPresent("su.nightexpress.economybridge.EconomyBridge")
+                && isClassPresent("su.nightexpress.economybridge.api.Currency"))
         {
-            new EconomyBridgeIntegration(this).register();
-            getLogger().info("Successfully hooked into NightCore EconomyBridge! Premium currencies registered.");
+            try
+            {
+                new EconomyBridgeIntegration(this).register();
+                getLogger().info("Successfully hooked into EconomyBridge! Premium currencies registered.");
+            }
+            catch (Throwable throwable)
+            {
+                getLogger().log(Level.WARNING, "EconomyBridge hook failed. Continuing without bridge integration.", throwable);
+            }
         }
         else
         {
-            getLogger().warning("NightCore was not found! Orbs and Votepoints will not be bridged to shops.");
+            getLogger().warning("EconomyBridge was not found or API classes are unavailable. Orbs and Votepoints will not be bridged to shops.");
         }
 
 
@@ -451,8 +460,9 @@ public class OrbisEconomy extends JavaPlugin
             }
 
             boolean excludedByPermission = balanceTopConsiderExcludePermission
-                    && permissions != null
-                    && permissions.playerHas(null, player, "orbiseconomy.balancetop.exclude");
+                    && player.isOnline()
+                    && player.getPlayer() != null
+                    && player.getPlayer().hasPermission("orbiseconomy.balancetop.exclude");
             boolean excludedByBan = balanceTopExcludePermanentlyBannedPlayers && player.isBanned();
 
             candidates.add(new BalanceTopCandidate(
@@ -765,6 +775,34 @@ public class OrbisEconomy extends JavaPlugin
         return new PlayerAccount(balances, true);
     }
 
+
+    private boolean isClassPresent(String className)
+    {
+        try
+        {
+            Class.forName(className, false, getClassLoader());
+            return true;
+        }
+        catch (ClassNotFoundException ignored)
+        {
+            return false;
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void registerVaultEconomyService()
+    {
+        try
+        {
+            Class vaultEconomyClass = Class.forName("net.milkbowl.vault.economy.Economy", false, getClassLoader());
+            Bukkit.getServicesManager().register(vaultEconomyClass, economy, this, ServicePriority.Highest);
+        }
+        catch (ClassNotFoundException exception)
+        {
+            throw new IllegalStateException("Vault API classes are unavailable while registering economy service.", exception);
+        }
+    }
+
     // ----- Getters -----
 
     // Getter for "dirtyPlayerAccountSnapshots"
@@ -774,7 +812,7 @@ public class OrbisEconomy extends JavaPlugin
     }
 
     // Getter for "economy"
-    public net.milkbowl.vault.economy.Economy getEconomy()
+    public Economy getEconomy()
     {
         return economy;
     }

@@ -15,10 +15,10 @@ dependencies:
       required: false
       join-classpath: true
     LiteBans:
-      load: BEFORE
+      load: AFTER
       required: false
       join-classpath: true
-    NightCore:
+    EconomyBridge:
       load: AFTER
       required: false
       join-classpath: true
