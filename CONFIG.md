@@ -42,3 +42,20 @@ Explicit player-target placeholders for non-player contexts:
 - `%orbiseconomy_balance_formatted_for_uuid_<currencyId>_<uuid>%`
 - `%orbiseconomy_balance_for_name_<currencyId>_<name>%`
 - `%orbiseconomy_balance_formatted_for_name_<currencyId>_<name>%`
+
+
+## EconomyBridge IDs (`settings.economybridge.id-prefix`)
+
+EconomyBridge currency IDs are built from:
+
+- `<id-prefix><currency-id>`
+- `id-prefix` comes from `settings.economybridge.id-prefix` in `config.yml`.
+- `currency-id` is the normalized key from `settings.currencies` (for example: `coins`, `orbs`, `votepoints`).
+
+Examples:
+
+- `settings.economybridge.id-prefix: ""` -> `coins`, `orbs`, `votepoints`
+- `settings.economybridge.id-prefix: "orbiseconomy_"` -> `orbiseconomy_coins`, `orbiseconomy_orbs`, `orbiseconomy_votepoints`
+
+Use these exact IDs in shop/reward configs (ExcellentShop, NightCore, SunLight, and other EconomyBridge consumers).
+If IDs do not resolve after config changes, run `/economybridge reload` and re-check the startup sync summary log.
