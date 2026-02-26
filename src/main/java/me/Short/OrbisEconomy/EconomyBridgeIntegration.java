@@ -11,9 +11,11 @@ import su.nightexpress.economybridge.api.Currency;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -60,8 +62,115 @@ public class EconomyBridgeIntegration
                     + " (" + currency.getNamePlural() + ") as id '" + canonicalId + "'");
         }
 
-        instance.getLogger().info("[EconomyBridge] Registered EconomyBridge IDs: " + String.join(", ", registeredIds));
+        instance.getLogger().info("EconomyBridge sync complete: [" + String.join(", ", registeredIds) + "]");
+        verifyRegisteredIds(registeredIds);
         instance.getLogger().info("[EconomyBridge] Use these exact IDs in NightCore/SunLight/ExcellentShop/EconomyBridge-backed plugin configs.");
+    }
+
+    private void verifyRegisteredIds(List<String> expectedIds)
+    {
+        Set<String> discoveredIds = lookupRegisteredIds();
+
+        if (discoveredIds == null)
+        {
+            instance.getLogger().warning("[EconomyBridge] Verification API unavailable. Expected IDs: [" + String.join(", ", expectedIds) + "]. Run EconomyBridge sync (for example: /economybridge reload) after config changes.");
+            return;
+        }
+
+        List<String> missingIds = expectedIds.stream().filter(id -> !discoveredIds.contains(id)).toList();
+        if (missingIds.isEmpty())
+        {
+            instance.getLogger().info("[EconomyBridge] Verification passed. Found all expected IDs in EconomyBridge registry.");
+            return;
+        }
+
+        instance.getLogger().warning("[EconomyBridge] Verification failed. Missing IDs in EconomyBridge registry: [" + String.join(", ", missingIds) + "]");
+        instance.getLogger().warning("[EconomyBridge] Expected IDs: [" + String.join(", ", expectedIds) + "]. Run EconomyBridge sync (for example: /economybridge reload) and verify dependent plugin configs.");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<String> lookupRegisteredIds()
+    {
+        try
+        {
+            Object currenciesById = EconomyBridge.class.getMethod("getCurrenciesMap").invoke(null);
+            if (currenciesById instanceof Map<?, ?> currenciesMap)
+            {
+                Set<String> discovered = new HashSet<>();
+                currenciesMap.keySet().stream()
+                        .filter(String.class::isInstance)
+                        .map(String.class::cast)
+                        .forEach(discovered::add);
+                return discovered;
+            }
+        }
+        catch (NoSuchMethodException ignored)
+        {
+            // Continue trying alternative API methods.
+        }
+        catch (Exception exception)
+        {
+            instance.getLogger().log(Level.WARNING, "[EconomyBridge] Failed to query getCurrenciesMap() for verification.", exception);
+            return null;
+        }
+
+        try
+        {
+            Object currencies = EconomyBridge.class.getMethod("getCurrencies").invoke(null);
+            if (currencies instanceof Collection<?> collection)
+            {
+                Set<String> discovered = new HashSet<>();
+                for (Object entry : collection)
+                {
+                    if (entry instanceof Currency currency)
+                    {
+                        discovered.add(currency.getInternalId());
+                    }
+                }
+                return discovered;
+            }
+        }
+        catch (NoSuchMethodException ignored)
+        {
+            // Continue trying alternative API methods.
+        }
+        catch (Exception exception)
+        {
+            instance.getLogger().log(Level.WARNING, "[EconomyBridge] Failed to query getCurrencies() for verification.", exception);
+            return null;
+        }
+
+        try
+        {
+            Set<String> discovered = new HashSet<>();
+            for (String currencyId : instance.getCurrencies().keySet())
+            {
+                String canonicalId = buildCanonicalId(currencyId);
+                Object lookup = EconomyBridge.class.getMethod("getCurrency", String.class).invoke(null, canonicalId);
+                if (lookup != null)
+                {
+                    discovered.add(canonicalId);
+                }
+            }
+
+            return discovered;
+        }
+        catch (NoSuchMethodException ignored)
+        {
+            return null;
+        }
+        catch (Exception exception)
+        {
+            instance.getLogger().log(Level.WARNING, "[EconomyBridge] Failed to query getCurrency(String) for verification.", exception);
+            return null;
+        }
+    }
+
+    private String buildCanonicalId(String rawCurrencyId)
+    {
+        String idPrefix = Objects.requireNonNullElse(instance.getConfig().getString("settings.economybridge.id-prefix", ""), "");
+        String normalizedCurrencyId = OrbisEconomy.normalizeCurrencyId(rawCurrencyId);
+        return idPrefix + normalizedCurrencyId;
     }
 
     private void unregisterIfSupported(String canonicalId)

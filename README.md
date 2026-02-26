@@ -56,8 +56,14 @@ OrbisEconomy registers one EconomyBridge currency per configured `settings.curre
 - `getInternalId()` and `getOriginalId()` now resolve to the same canonical ID.
 - Optional namespacing can be enabled with `settings.economybridge.id-prefix`.
   - Example: `id-prefix: "orbiseconomy_"` makes `orbs` register as `orbiseconomy_orbs`.
+- Shops and all EconomyBridge-backed plugins must reference these **exact canonical IDs**.
 
-At startup, OrbisEconomy logs all registered EconomyBridge IDs so you can copy/paste exact values into dependent plugin configs.
+At startup, OrbisEconomy logs a sync summary in this exact format:
+
+- `EconomyBridge sync complete: [coins, orbs, votepoints]`
+
+The IDs inside that summary already include your configured `settings.economybridge.id-prefix`.
+If the EconomyBridge verification API is unavailable, OrbisEconomy logs deterministic expected IDs and instructs you to run `/economybridge reload`.
 
 Example IDs in EconomyBridge-backed plugin configs:
 

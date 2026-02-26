@@ -753,7 +753,16 @@ public class OrbisEconomy extends JavaPlugin
                 || !isClassPresent("su.nightexpress.economybridge.EconomyBridge")
                 || !isClassPresent("su.nightexpress.economybridge.api.Currency"))
         {
-            getLogger().warning("EconomyBridge registration skipped (trigger='" + trigger + "'): plugin/API unavailable. Orbs and Votepoints are not bridged.");
+            String idPrefix = getConfig().getString("settings.economybridge.id-prefix", "");
+            if (idPrefix == null)
+            {
+                idPrefix = "";
+            }
+
+            final String canonicalPrefix = idPrefix;
+            List<String> expectedIds = currencies.keySet().stream().map(id -> canonicalPrefix + id).toList();
+            getLogger().warning("EconomyBridge registration skipped (trigger='" + trigger + "'): plugin/API unavailable. Expected IDs: [" + String.join(", ", expectedIds) + "]");
+            getLogger().warning("[EconomyBridge] Install/enable EconomyBridge and run /economybridge reload to sync these IDs.");
             return;
         }
 
