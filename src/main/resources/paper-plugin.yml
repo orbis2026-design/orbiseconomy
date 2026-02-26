@@ -27,7 +27,7 @@ dependencies:
       required: false
       join-classpath: true
     OrbisShop:
-      load: BEFORE
+      load: AFTER
       required: false
       join-classpath: false
     OrbisLoot:
