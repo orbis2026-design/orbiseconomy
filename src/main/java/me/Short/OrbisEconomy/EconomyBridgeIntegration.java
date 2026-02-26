@@ -1,5 +1,7 @@
 package me.Short.OrbisEconomy;
 
+import com.google.gson.JsonObject;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -13,21 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * EconomyBridge integration for OrbisLoot compatibility.
- *
- * <p>This class registers a separate EconomyBridge provider for each currency configured in
- * {@code settings.currencies} in {@code config.yml}. This allows plugins such as OrbisLoot to
- * natively reward any supported currency (e.g. "coins", "orbs", "votepoints") by name.
- *
- * <p><b>Setup instructions (to be completed when the EconomyBridge API is available):</b>
- * <ol>
- *   <li>Add the EconomyBridge API jar as a {@code compileOnly} dependency in {@code build.gradle.kts}.</li>
- *   <li>Add {@code EconomyBridge} to the optional server dependencies in {@code paper-plugin.yml}.</li>
- *   <li>Implement the {@code EconomyBridge} provider interface in the inner class below, replacing
- *       the TODO comments with the actual API calls.</li>
- * </ol>
- */
 public class EconomyBridgeIntegration
 {
 
@@ -38,10 +25,6 @@ public class EconomyBridgeIntegration
         this.instance = instance;
     }
 
-    /**
-     * Registers one EconomyBridge provider per configured currency.
-     * Called from {@link OrbisEconomy#onEnable()} when the EconomyBridge plugin is detected.
-     */
     public void register()
     {
         String idPrefix = instance.getConfig().getString("settings.economybridge.id-prefix", "");
@@ -69,12 +52,10 @@ public class EconomyBridgeIntegration
         instance.getLogger().info("[EconomyBridge] Use these exact IDs in NightCore/SunLight/ExcellentShop/EconomyBridge-backed plugin configs.");
     }
 
-    /**
-     * EconomyBridge {@link Currency} provider that delegates all balance operations to OrbisEconomy's
-     * {@link PlayerAccount} map.
-     */
     private static class OrbisEconomyBridgeProvider implements Currency
     {
+
+        private static final List<String> PREMIUM_CURRENCIES = List.of("orbs", "votepoints");
 
         private final OrbisEconomy instance;
         private final me.Short.OrbisEconomy.Currency currency;
@@ -119,7 +100,6 @@ public class EconomyBridgeIntegration
         @NotNull
         public String getFormat()
         {
-            // EconomyBridge uses %amount% and %name% as placeholders in format strings
             return currency.getFormat()
                     .replace("<amount>", "%amount%")
                     .replace("<name>", "%name%");
@@ -160,6 +140,17 @@ public class EconomyBridgeIntegration
         @Override
         public double getBalance(@NotNull UUID playerId)
         {
+            String curId = currency.getId().toLowerCase();
+            if (PREMIUM_CURRENCIES.contains(curId))
+            {
+                PremiumBalance cached = instance.getPremiumBalances().get(playerId);
+                if (cached == null || !cached.isAvailable())
+                {
+                    return 0.0;
+                }
+                return cached.getBalance(curId);
+            }
+
             PlayerAccount account = instance.getPlayerAccounts().get(playerId);
             if (account == null)
             {
@@ -177,6 +168,13 @@ public class EconomyBridgeIntegration
         @Override
         public void give(@NotNull UUID playerId, double amount)
         {
+            String curId = currency.getId().toLowerCase();
+            if (PREMIUM_CURRENCIES.contains(curId))
+            {
+                processPremiumTransaction(playerId, curId, Math.round(amount), "Deposit via EconomyBridge");
+                return;
+            }
+
             PlayerAccount account = instance.getPlayerAccounts().get(playerId);
             if (account == null)
             {
@@ -200,6 +198,13 @@ public class EconomyBridgeIntegration
         @Override
         public void take(@NotNull UUID playerId, double amount)
         {
+            String curId = currency.getId().toLowerCase();
+            if (PREMIUM_CURRENCIES.contains(curId))
+            {
+                processPremiumTransaction(playerId, curId, -Math.round(amount), "Withdrawal via EconomyBridge");
+                return;
+            }
+
             PlayerAccount account = instance.getPlayerAccounts().get(playerId);
             if (account == null)
             {
@@ -214,6 +219,28 @@ public class EconomyBridgeIntegration
             instance.getDirtyPlayerAccountSnapshots().put(playerId, account.snapshot());
         }
 
-    }
+        private void processPremiumTransaction(UUID playerId, String currencyId, long amountDelta, String reason)
+        {
+            if (Bukkit.isPrimaryThread())
+            {
+                throw new RuntimeException("Premium transactions must execute asynchronously; blocking I/O is forbidden on the server thread.");
+            }
 
+            PremiumBalance cached = instance.getPremiumBalances().get(playerId);
+            if (cached == null || !cached.isAvailable())
+            {
+                throw new RuntimeException("Premium economy API is unavailable for " + playerId + ".");
+            }
+
+            JsonObject payload = new JsonObject();
+            payload.addProperty("transaction_id", UUID.randomUUID().toString());
+            payload.addProperty("uuid", playerId.toString());
+            payload.addProperty("currency", currencyId);
+            payload.addProperty("amount", amountDelta);
+            payload.addProperty("reason", reason);
+
+            instance.getOrbisPaperAgentBridge().makeSignedApiCall("POST", "/api/economy/transaction", payload).join();
+            cached.applyDelta(currencyId, amountDelta);
+        }
+    }
 }

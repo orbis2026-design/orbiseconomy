@@ -22,6 +22,10 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    OrbisPaperAgent:
+      load: BEFORE
+      required: false
+      join-classpath: true
     OrbisLoot:
       load: AFTER
       required: false
