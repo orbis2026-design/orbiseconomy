@@ -194,24 +194,7 @@ public class OrbisEconomy extends JavaPlugin
         }
 
         // Register EconomyBridge providers, if EconomyBridge runtime is available
-        if (pluginManager.getPlugin("EconomyBridge") != null
-                && isClassPresent("su.nightexpress.economybridge.EconomyBridge")
-                && isClassPresent("su.nightexpress.economybridge.api.Currency"))
-        {
-            try
-            {
-                new EconomyBridgeIntegration(this).register();
-                getLogger().info("Successfully hooked into EconomyBridge! Premium currencies registered.");
-            }
-            catch (Throwable throwable)
-            {
-                getLogger().log(Level.WARNING, "EconomyBridge hook failed. Continuing without bridge integration.", throwable);
-            }
-        }
-        else
-        {
-            getLogger().warning("EconomyBridge was not found or API classes are unavailable. Orbs and Votepoints will not be bridged to shops.");
-        }
+        attemptEconomyBridgeRegistration("plugin enable");
 
 
         // bStats
@@ -760,6 +743,29 @@ public class OrbisEconomy extends JavaPlugin
         getLogger().info(" - %orbiseconomy_balance_formatted_for_uuid_" + exampleCurrencyId + "_<uuid>%");
         getLogger().info(" - %orbiseconomy_balance_for_name_" + exampleCurrencyId + "_<name>%");
         getLogger().info(" - %orbiseconomy_balance_formatted_for_name_" + exampleCurrencyId + "_<name>%");
+    }
+
+    public void attemptEconomyBridgeRegistration(String trigger)
+    {
+        PluginManager pluginManager = getServer().getPluginManager();
+
+        if (pluginManager.getPlugin("EconomyBridge") == null
+                || !isClassPresent("su.nightexpress.economybridge.EconomyBridge")
+                || !isClassPresent("su.nightexpress.economybridge.api.Currency"))
+        {
+            getLogger().warning("EconomyBridge registration skipped (trigger='" + trigger + "'): plugin/API unavailable. Orbs and Votepoints are not bridged.");
+            return;
+        }
+
+        try
+        {
+            new EconomyBridgeIntegration(this).register();
+            getLogger().info("Successfully hooked into EconomyBridge (trigger='" + trigger + "').");
+        }
+        catch (Throwable throwable)
+        {
+            getLogger().log(Level.WARNING, "EconomyBridge hook failed (trigger='" + trigger + "'). Continuing without bridge integration.", throwable);
+        }
     }
 
     // Method to create a new PlayerAccount with default balances for all configured currencies

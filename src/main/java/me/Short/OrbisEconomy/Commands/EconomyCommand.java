@@ -50,6 +50,15 @@ public class EconomyCommand
                     return Command.SINGLE_SUCCESS;
                 }));
 
+        root.then(Commands.literal("bridge-sync")
+                .requires(sender -> sender.getSender().hasPermission("orbiseconomy.command.economy.reload"))
+                .executes(ctx ->
+                {
+                    instance.attemptEconomyBridgeRegistration("manual /" + commandName + " bridge-sync");
+                    ctx.getSource().getSender().sendMessage(Component.text("Triggered EconomyBridge provider sync. Check console for registered IDs."));
+                    return Command.SINGLE_SUCCESS;
+                }));
+
         return root.build();
     }
 
