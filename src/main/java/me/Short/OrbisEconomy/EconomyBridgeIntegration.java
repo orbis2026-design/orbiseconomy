@@ -11,9 +11,12 @@ import su.nightexpress.economybridge.api.Currency;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class EconomyBridgeIntegration
 {
@@ -34,12 +37,21 @@ public class EconomyBridgeIntegration
         }
 
         List<String> registeredIds = new ArrayList<>();
+        Set<String> seenIds = new HashSet<>();
         for (Map.Entry<String, me.Short.OrbisEconomy.Currency> entry : instance.getCurrencies().entrySet())
         {
             String currencyId = entry.getKey();
             me.Short.OrbisEconomy.Currency currency = entry.getValue();
 
             String canonicalId = idPrefix + currency.getId();
+
+            if (!seenIds.add(canonicalId))
+            {
+                instance.getLogger().warning("[EconomyBridge] Skipping duplicate canonical ID from config/currency normalization: '" + canonicalId + "'.");
+                continue;
+            }
+
+            unregisterIfSupported(canonicalId);
 
             EconomyBridge.registerCurrency(new OrbisEconomyBridgeProvider(instance, currency, canonicalId));
             registeredIds.add(canonicalId);
@@ -50,6 +62,39 @@ public class EconomyBridgeIntegration
 
         instance.getLogger().info("[EconomyBridge] Registered EconomyBridge IDs: " + String.join(", ", registeredIds));
         instance.getLogger().info("[EconomyBridge] Use these exact IDs in NightCore/SunLight/ExcellentShop/EconomyBridge-backed plugin configs.");
+    }
+
+    private void unregisterIfSupported(String canonicalId)
+    {
+        try
+        {
+            EconomyBridge.class.getMethod("unregisterCurrency", String.class).invoke(null, canonicalId);
+            instance.getLogger().info("[EconomyBridge] Replacing existing provider for ID '" + canonicalId + "'.");
+            return;
+        }
+        catch (NoSuchMethodException ignored)
+        {
+            // Fallback below for legacy API variants.
+        }
+        catch (Exception exception)
+        {
+            instance.getLogger().log(Level.WARNING, "[EconomyBridge] Failed to unregister currency ID '" + canonicalId + "' before re-registering.", exception);
+            return;
+        }
+
+        try
+        {
+            EconomyBridge.class.getMethod("removeCurrency", String.class).invoke(null, canonicalId);
+            instance.getLogger().info("[EconomyBridge] Replacing existing provider for ID '" + canonicalId + "'.");
+        }
+        catch (NoSuchMethodException ignored)
+        {
+            // API does not expose an explicit unregister/remove call; registerCurrency semantics will apply.
+        }
+        catch (Exception exception)
+        {
+            instance.getLogger().log(Level.WARNING, "[EconomyBridge] Failed to remove currency ID '" + canonicalId + "' before re-registering.", exception);
+        }
     }
 
     private static class OrbisEconomyBridgeProvider implements Currency
