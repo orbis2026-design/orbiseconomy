@@ -83,6 +83,12 @@ public class OrbisEconomy extends JavaPlugin
     // Cache of all player accounts
     private Map<UUID, PlayerAccount> playerAccounts;
 
+    // Premium network currency cache hydrated from OrbisPaperAgent
+    private Map<UUID, PremiumBalance> premiumBalances;
+
+    // Bridge service for signed API calls via OrbisPaperAgent
+    private OrbisPaperAgentBridge orbisPaperAgentBridge;
+
     // Top balances and combined total balance
     private BalanceTop balanceTop;
 
@@ -202,6 +208,10 @@ public class OrbisEconomy extends JavaPlugin
 
         // Cache all players' UUIDs and their account data
         playerAccounts = cachePlayerAccounts();
+
+        // Premium cache starts empty and is hydrated during async pre-login
+        premiumBalances = new ConcurrentHashMap<>();
+        orbisPaperAgentBridge = new OrbisPaperAgentBridge();
 
         // Set "updateBalanceTopTaskRunning"
         updateBalanceTopTaskRunning = new AtomicBoolean(false);
@@ -798,6 +808,16 @@ public class OrbisEconomy extends JavaPlugin
     public Map<String, Currency> getCurrencies()
     {
         return currencies;
+    }
+
+    public Map<UUID, PremiumBalance> getPremiumBalances()
+    {
+        return premiumBalances;
+    }
+
+    public OrbisPaperAgentBridge getOrbisPaperAgentBridge()
+    {
+        return orbisPaperAgentBridge;
     }
 
     public static String normalizeCurrencyId(String currencyId)
