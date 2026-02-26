@@ -193,15 +193,24 @@ public class OrbisEconomy extends JavaPlugin
             new PlaceholderAPI(this).register();
         }
 
-        // Register EconomyBridge providers, if NightCore is installed
-        if (pluginManager.getPlugin("NightCore") != null)
+        // Register EconomyBridge providers, if EconomyBridge runtime is available
+        if (pluginManager.getPlugin("EconomyBridge") != null
+                && isClassPresent("su.nightexpress.economybridge.EconomyBridge")
+                && isClassPresent("su.nightexpress.economybridge.api.Currency"))
         {
-            new EconomyBridgeIntegration(this).register();
-            getLogger().info("Successfully hooked into NightCore EconomyBridge! Premium currencies registered.");
+            try
+            {
+                new EconomyBridgeIntegration(this).register();
+                getLogger().info("Successfully hooked into EconomyBridge! Premium currencies registered.");
+            }
+            catch (Throwable throwable)
+            {
+                getLogger().log(Level.WARNING, "EconomyBridge hook failed. Continuing without bridge integration.", throwable);
+            }
         }
         else
         {
-            getLogger().warning("NightCore was not found! Orbs and Votepoints will not be bridged to shops.");
+            getLogger().warning("EconomyBridge was not found or API classes are unavailable. Orbs and Votepoints will not be bridged to shops.");
         }
 
 
